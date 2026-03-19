@@ -37,8 +37,5 @@ public class JCFUserService implements UserService {
         return data;
     }
 
-    @Override
-    public User updateUser() {
-        sc.nextLine();
-    }
+
 }

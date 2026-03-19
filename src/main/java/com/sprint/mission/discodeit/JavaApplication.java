@@ -14,5 +14,7 @@ public class JavaApplication {
         userService.save(user);
         System.out.println(userService.findAll());
         System.out.println("---------------사용자 테스트 끝!!!---------------------\n");
+
+        System.out.println("----------------메세지 테스트 시작!!!------------------");
     }
 }

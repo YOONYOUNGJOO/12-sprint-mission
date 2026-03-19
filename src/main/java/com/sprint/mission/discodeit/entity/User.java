@@ -9,6 +9,7 @@ public class User {
     private String password;
     private String nickname;
     private String phoneNumber;
+    private boolean active;
     private final Long createdAt;
     private Long updatedAt;
 
@@ -19,6 +20,7 @@ public class User {
         this.password = password;
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
+        this.active = true;
         createdAt = System.currentTimeMillis();
         updatedAt = System.currentTimeMillis();
     }
@@ -45,6 +47,10 @@ public class User {
 
     public String getPhoneNumber() {
         return phoneNumber;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public Long getCreatedAt() {
@@ -80,6 +86,11 @@ public class User {
         updatedAt = System.currentTimeMillis();
     }
 
+    public void updateActive(boolean active) {
+        this.active = active;
+        updatedAt = System.currentTimeMillis();
+    }
+
     public void update(String username, String email, String password, String nickname, String phoneNumber) {
         this.username = username;
         this.email = email;
@@ -98,6 +109,7 @@ public class User {
                 ", password='" + password + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
+                ", active=" + active +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
