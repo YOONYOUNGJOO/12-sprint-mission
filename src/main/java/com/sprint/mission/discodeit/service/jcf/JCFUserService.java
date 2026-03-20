@@ -5,14 +5,10 @@ import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 
 public class JCFUserService implements UserService {
-
-    public Scanner sc = new Scanner(System.in);
     private final List<User> data;
-
     public JCFUserService() {
         data = new ArrayList<>();
     }
@@ -25,17 +21,60 @@ public class JCFUserService implements UserService {
 
     @Override
     public User findById(UUID id) {
-        for(User user : data){
-            if(user.getUserId().equals(id)) return user;
-        }
-//        data.stream().filter(idata -> idata.getId().equals(id));
-        return null;
+        return data.stream().filter(user -> user.getUserId().equals(id)).findFirst().orElseThrow();
     }
 
     @Override
     public List<User> findAll() {
-        return data;
+        return new ArrayList<>(data);
     }
 
+    @Override
+    public User updateUsername(UUID id, String username) {
+        User userId = findById(id);
+        userId.updateUsername(username);
+        return userId;
+    }
 
+    @Override
+    public User updateEmail(UUID id, String email) {
+        User userId = findById(id);
+        userId.updateEmail(email);
+        return userId;
+    }
+
+    @Override
+    public User updateNickname(UUID id, String nickname) {
+        User userId = findById(id);
+        userId.updateNickname(nickname);
+        return userId;
+    }
+
+    @Override
+    public User updatePassword(UUID id, String password) {
+        User userId = findById(id);
+        userId.updatePassword(password);
+        return userId;
+    }
+
+    @Override
+    public User updatePhoneNumber(UUID id, String phoneNumber) {
+        User userId = findById(id);
+        userId.updatePhoneNumber(phoneNumber);
+        return userId;
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        User user = findById(id);
+        data.remove(user);
+    }
+
+    @Override
+    public User softDeleteById(UUID id) {
+        User userId = findById(id);
+        userId.updateActive(false);
+        return userId;
+
+    }
 }

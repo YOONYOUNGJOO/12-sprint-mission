@@ -14,7 +14,7 @@ public interface UserService {
     User updateNickname(UUID id, String nickname);
     User updatePassword(UUID id, String password);
     User updatePhoneNumber(UUID id, String phoneNum);
-    User deleteById(UUID id);
+    void deleteById(UUID id);
     User softDeleteById(UUID id);
 
 

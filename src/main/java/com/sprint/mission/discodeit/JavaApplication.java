@@ -13,7 +13,10 @@ public class JavaApplication {
         User user = new User("test", "test@email.com", "1234", "test", "010-1234-5678");
         userService.save(user);
         System.out.println(userService.findAll());
+        userService.deleteById(user.getUserId());
+        System.out.println(userService.findAll());
         System.out.println("---------------사용자 테스트 끝!!!---------------------\n");
+
 
         System.out.println("----------------메세지 테스트 시작!!!------------------");
     }

@@ -10,6 +10,6 @@ public interface MessageService {
     Message findById(UUID id);
     List<Message> findAll();
     Message updateContent(UUID id, String content);
-    Message deleteById(UUID id);
+    void deleteById(UUID id);
     Message softDeleteById(UUID id);
 }

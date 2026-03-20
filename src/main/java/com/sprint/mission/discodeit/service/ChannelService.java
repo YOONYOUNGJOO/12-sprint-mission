@@ -11,7 +11,7 @@ public interface ChannelService {
     Channel findById(UUID id);
     List<Channel> findAll();
     Channel updateChannelName(UUID id , String channelName);
-    Channel deleteById(UUID id);
+    void deleteById(UUID id);
     Channel softDeleteById(UUID id);
 
 }
