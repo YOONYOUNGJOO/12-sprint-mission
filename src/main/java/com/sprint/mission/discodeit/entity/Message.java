@@ -7,16 +7,14 @@ public class Message {
     private final UUID userId;
     private final UUID channelId;
     private String content;
-    private boolean active;
     private final Long createdAt;
     private Long updatedAt;
 
     public Message(String content, User user, Channel channel) {
         messageId = UUID.randomUUID();
-        this.content = content;
         this.userId = user.getUserId();
         this.channelId = channel.getChannelId();
-        this.active = true;
+        this.content = content;
         createdAt = System.currentTimeMillis();
         updatedAt = System.currentTimeMillis();
     }
@@ -37,10 +35,6 @@ public class Message {
         return content;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
     public Long getCreatedAt() {
         return createdAt;
     }
@@ -54,11 +48,6 @@ public class Message {
         updatedAt = System.currentTimeMillis();
     }
 
-    public void updateActive(boolean active) {
-        this.active = active;
-        updatedAt = System.currentTimeMillis();
-    }
-
     @Override
     public String toString() {
         return "Message{" +
@@ -66,7 +55,6 @@ public class Message {
                 ", userId=" + userId +
                 ", channelId=" + channelId +
                 ", content='" + content + '\'' +
-                ", active=" + active +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

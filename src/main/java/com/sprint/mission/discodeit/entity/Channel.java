@@ -4,17 +4,13 @@ import java.util.UUID;
 
 public class Channel {
     private final UUID channelId;
-    private final UUID ownerId;
     private String channelName;
-    private boolean active;
     private final Long createdAt;
     private Long updatedAt;
 
-    public Channel(String channelName, User user) {
+    public Channel(String channelName) {
         channelId = UUID.randomUUID();
-        this.ownerId = user.getUserId();
         this.channelName = channelName;
-        this.active = true;
         createdAt = System.currentTimeMillis();
         updatedAt = System.currentTimeMillis();
     }
@@ -23,16 +19,8 @@ public class Channel {
         return channelId;
     }
 
-    public UUID getOwnerId() {
-        return ownerId;
-    }
-
     public String getChannelName() {
         return channelName;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     public Long getCreatedAt() {
@@ -48,18 +36,11 @@ public class Channel {
         updatedAt = System.currentTimeMillis();
     }
 
-    public void updateActive(boolean active) {
-        this.active = active;
-        updatedAt = System.currentTimeMillis();
-    }
-
     @Override
     public String toString() {
         return "Channel{" +
                 "channelId=" + channelId +
-                ", ownerId=" + ownerId +
                 ", channelName='" + channelName + '\'' +
-                ", active=" + active +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

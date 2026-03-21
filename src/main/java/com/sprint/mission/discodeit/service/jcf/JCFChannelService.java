@@ -3,30 +3,33 @@ package com.sprint.mission.discodeit.service.jcf;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.service.ChannelService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class JCFChannelService implements ChannelService {
-    private final List<Channel> data;
+    private final Map<UUID, Channel> data;
     public JCFChannelService() {
-        data = new ArrayList<>();
+        data = new HashMap<>();
     }
 
     @Override
     public Channel save(Channel channel) {
-        data.add(channel);
+        data.put(channel.getChannelId() ,channel);
         return channel;
     }
 
     @Override
     public Channel findById(UUID id) {
-        return data.stream().filter(channel -> channel.getChannelId().equals(id)).findFirst().orElseThrow();
+        if(data.get(id) == null){
+            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+        }
+        return data.get(id);
     }
 
     @Override
     public List<Channel> findAll() {
-        return new ArrayList<>(data);
+        List<Channel> channels =  new ArrayList<>(data.values());
+        channels.sort((c1, c2) -> Long.compare(c1.getCreatedAt(), c2.getCreatedAt()));
+        return channels;
     }
 
     @Override
@@ -38,13 +41,7 @@ public class JCFChannelService implements ChannelService {
 
     @Override
     public void deleteById(UUID id) {
-        data.remove(findById(id));
+        data.remove(id);
     }
 
-    @Override
-    public Channel softDeleteById(UUID id) {
-        Channel ch = findById(id);
-        ch.updateActive(false);
-        return ch;
-    }
 }

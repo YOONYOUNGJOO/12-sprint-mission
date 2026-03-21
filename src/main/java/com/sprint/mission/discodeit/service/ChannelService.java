@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChannelService {
-
     Channel save(Channel channel);
     Channel findById(UUID id);
     List<Channel> findAll();
     Channel updateChannelName(UUID id , String channelName);
     void deleteById(UUID id);
-    Channel softDeleteById(UUID id);
 
 }

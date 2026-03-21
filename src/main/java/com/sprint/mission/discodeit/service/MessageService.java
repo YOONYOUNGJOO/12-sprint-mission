@@ -11,5 +11,4 @@ public interface MessageService {
     List<Message> findAll();
     Message updateContent(UUID id, String content);
     void deleteById(UUID id);
-    Message softDeleteById(UUID id);
 }

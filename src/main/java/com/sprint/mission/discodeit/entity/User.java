@@ -7,20 +7,14 @@ public class User {
     private String username;
     private String email;
     private String password;
-    private String nickname;
-    private String phoneNumber;
-    private boolean active;
     private final Long createdAt;
     private Long updatedAt;
 
-    public User(String username, String email, String password, String nickname, String phoneNumber) {
+    public User(String username, String email, String password) {
         userId = UUID.randomUUID();
         this.username = username;
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
-        this.phoneNumber = phoneNumber;
-        this.active = true;
         createdAt = System.currentTimeMillis();
         updatedAt = System.currentTimeMillis();
     }
@@ -39,18 +33,6 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     public Long getCreatedAt() {
@@ -76,28 +58,12 @@ public class User {
         updatedAt = System.currentTimeMillis();
     }
 
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-        updatedAt = System.currentTimeMillis();
-    }
-
-    public void updatePhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-        updatedAt = System.currentTimeMillis();
-    }
-
-    public void updateActive(boolean active) {
-        this.active = active;
-        updatedAt = System.currentTimeMillis();
-    }
 
     public void update(String username, String email, String password, String nickname, String phoneNumber) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
-        this.phoneNumber = phoneNumber;
-        updatedAt = System.currentTimeMillis();
+               updatedAt = System.currentTimeMillis();
     }
 
     @Override
@@ -107,9 +73,6 @@ public class User {
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
-                ", nickname='" + nickname + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", active=" + active +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
