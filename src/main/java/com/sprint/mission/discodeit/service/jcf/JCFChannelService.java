@@ -1,47 +1,84 @@
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 
 import java.util.*;
 
 public class JCFChannelService implements ChannelService {
-    private final Map<UUID, Channel> data;
-    public JCFChannelService() {
-        data = new HashMap<>();
-    }
+    private final ChannelRepository channelRepo = new JCFChannelRepository();
 
     @Override
-    public Channel save(Channel channel) {
-        data.put(channel.getChannelId() ,channel);
-        return channel;
+    public Channel create(ChannelType channelType, String channelName, String description) {
+        if (channelType == null) {
+            throw new IllegalArgumentException("채널 타입은 필수입니다.");
+        }
+
+        if (channelName == null || channelName.trim().isEmpty()) {
+            throw new IllegalArgumentException("채널명에 공백을 입력할 수 없습니다.");
+        }
+        if (description == null || description.trim().isEmpty()) {
+            throw new IllegalArgumentException("채널설명에 공백을 입력할 수 없습니다.");
+        }
+
+        Channel channel = new Channel(channelType, channelName, description);
+        return channelRepo.save(channel);
+
     }
 
     @Override
     public Channel findById(UUID id) {
-        if(data.get(id) == null){
+        Channel channel = channelRepo.findById(id);
+        if(channel == null){
             throw new IllegalArgumentException("존재하지 않는 채널입니다.");
         }
-        return data.get(id);
+        return channel;
     }
 
     @Override
     public List<Channel> findAll() {
-        List<Channel> channels =  new ArrayList<>(data.values());
+        List<Channel> channels =  channelRepo.findAll();
         channels.sort((c1, c2) -> Long.compare(c1.getCreatedAt(), c2.getCreatedAt()));
         return channels;
     }
 
     @Override
+    public Channel updateChannelType(UUID id, ChannelType channelType) {
+        if (channelType == null) {
+            throw new IllegalArgumentException("채널 타입은 필수입니다.");
+        }
+        Channel channel = findById(id);
+        channel.updateChannelType(channelType);
+        return channel;
+    }
+
+    @Override
     public Channel updateChannelName(UUID id, String channelName) {
-        Channel ch = findById(id);
-        ch.updateChannelName(channelName);
-        return ch;
+        if (channelName == null || channelName.trim().isEmpty()) {
+            throw new IllegalArgumentException("채널명에 공백을 입력할 수 없습니다.");
+        }
+        Channel channel = findById(id);
+        channel.updateChannelName(channelName);
+        return channel;
+    }
+
+    @Override
+    public Channel updateChannelDescription(UUID id, String description) {
+        if (description == null || description.trim().isEmpty()) {
+            throw new IllegalArgumentException("채널 설명에 공백을 입력할 수 없습니다.");
+        }
+        Channel channel = findById(id);
+        channel.updateDescription(description);
+        return channel;
     }
 
     @Override
     public void deleteById(UUID id) {
-        data.remove(id);
+        findById(id);
+        channelRepo.deleteById(id);
     }
 
 }

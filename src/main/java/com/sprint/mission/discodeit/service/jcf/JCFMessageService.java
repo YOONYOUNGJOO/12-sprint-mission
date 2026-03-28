@@ -1,6 +1,14 @@
 package com.sprint.mission.discodeit.service.jcf;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFChannelRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFMessageRepository;
+import com.sprint.mission.discodeit.repository.jcf.JCFUserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
@@ -8,45 +16,54 @@ import com.sprint.mission.discodeit.service.UserService;
 import java.util.*;
 
 public class JCFMessageService implements MessageService {
-    private final Map<UUID, Message> data;
-    private UserService us;
-    private ChannelService cs;
+    private final MessageRepository messageRepo = new JCFMessageRepository();
+    private final UserRepository userRepo = new JCFUserRepository();
+    private final ChannelRepository channelRepo = new JCFChannelRepository();
 
-    public JCFMessageService(UserService us, ChannelService cs) {
-        data = new HashMap<>();
-        this.us = us;
-        this.cs = cs;
-    }
 
     @Override
-    public Message save(Message message) {
-        if (!us.findAll().stream().anyMatch(user -> user.getUserId().equals(message.getUserId()))) {
-            throw new IllegalArgumentException("존재하지 않는 회원입니다");
+    public Message create(String content, UUID authorId, UUID channelId) {
+        if(content == null || content.trim().isEmpty()){
+            throw new IllegalArgumentException("내용은 공백일 수 없습니다.");
         }
-        if (!cs.findAll().stream().anyMatch(channel -> channel.getChannelId().equals(message.getChannelId()))) {
-            throw new IllegalArgumentException("존재하지 않는 채널입니다");
+        if (authorId == null){
+            throw new IllegalArgumentException("작성자 아이디는 공백일 수 없습니다.");
+        }else if(userRepo.findById(authorId) == null){
+            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
         }
-        data.put(message.getMessageId(), message);
-        return message;
+        if (channelId == null){
+            throw new IllegalArgumentException("채널 아이디는 공백일 수 없습니다.");
+        }else if(channelRepo.findById(channelId) == null){
+            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+        }
+
+        User user = userRepo.findById(authorId);
+        Channel channel = channelRepo.findById(channelId);
+        Message message = new Message(content, user, channel);
+        return messageRepo.save(message);
     }
 
     @Override
     public Message findById(UUID id) {
-        if (data.get(id) == null) {
-            throw new IllegalArgumentException("존재하지 않는 메세지 입니다.");
+       Message message = messageRepo.findById(id);
+        if(message == null ){
+            throw new IllegalArgumentException("존재하지 않는 메세지입니다.");
         }
-        return data.get(id);
+        return message;
     }
 
     @Override
     public List<Message> findAll() {
-        List<Message> messages = new ArrayList<>(data.values());
+        List<Message> messages = messageRepo.findAll();
         messages.sort((m1, m2) -> Long.compare(m1.getCreatedAt(), m2.getCreatedAt()));
         return messages;
     }
 
     @Override
     public Message updateContent(UUID id, String content) {
+        if(content == null || content.trim().isEmpty()){
+            throw new IllegalArgumentException("내용은 공백일 수 없습니다.");
+        }
         Message message = findById(id);
         message.updateContent(content);
         return message;
@@ -54,7 +71,9 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public void deleteById(UUID id) {
-        data.remove(id);
+        findById(id);
+        messageRepo.deleteById(id);
+
     }
 
 }
