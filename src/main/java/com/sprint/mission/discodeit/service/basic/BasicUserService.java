@@ -1,16 +1,18 @@
-package com.sprint.mission.discodeit.service.file;
+package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.file.FileUserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-public class FileUserService implements UserService {
-   private final UserRepository userRepo = new FileUserRepository();
+public class BasicUserService implements UserService{
+    private final UserRepository userRepo;
+
+    public BasicUserService(UserRepository userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
     public User create(String username, String email, String password) {
@@ -24,8 +26,7 @@ public class FileUserService implements UserService {
             throw new IllegalArgumentException("비밀번호는 공백을 입력할 수 없습니다.");
         }
         User user = new User(username, email, password);
-        userRepo.save(user);
-        return user;
+        return userRepo.save(user);
     }
 
     @Override
@@ -72,7 +73,6 @@ public class FileUserService implements UserService {
         User user = findById(id);
         user.updatePassword(password);
         return userRepo.save(user);
-
     }
 
     @Override

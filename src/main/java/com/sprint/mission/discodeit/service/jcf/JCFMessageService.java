@@ -23,17 +23,17 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public Message create(String content, UUID authorId, UUID channelId) {
-        if(content == null || content.trim().isEmpty()){
+        if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 공백일 수 없습니다.");
         }
-        if (authorId == null){
+        if (authorId == null) {
             throw new IllegalArgumentException("작성자 아이디는 공백일 수 없습니다.");
-        }else if(userRepo.findById(authorId) == null){
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+        } else if (userRepo.findById(authorId) == null) {
+            throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
-        if (channelId == null){
+        if (channelId == null) {
             throw new IllegalArgumentException("채널 아이디는 공백일 수 없습니다.");
-        }else if(channelRepo.findById(channelId) == null){
+        } else if (channelRepo.findById(channelId) == null) {
             throw new IllegalArgumentException("존재하지 않는 채널입니다.");
         }
 
@@ -45,8 +45,8 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public Message findById(UUID id) {
-       Message message = messageRepo.findById(id);
-        if(message == null ){
+        Message message = messageRepo.findById(id);
+        if (message == null) {
             throw new IllegalArgumentException("존재하지 않는 메세지입니다.");
         }
         return message;
@@ -54,26 +54,25 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public List<Message> findAll() {
-        List<Message> messages = messageRepo.findAll();
-        messages.sort((m1, m2) -> Long.compare(m1.getCreatedAt(), m2.getCreatedAt()));
-        return messages;
+        List<Message> messageList = messageRepo.findAll();
+        messageList.sort((m1, m2) -> Long.compare(m1.getCreatedAt(), m2.getCreatedAt()));
+        return messageList;
     }
 
     @Override
     public Message updateContent(UUID id, String content) {
-        if(content == null || content.trim().isEmpty()){
+        if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 공백일 수 없습니다.");
         }
         Message message = findById(id);
         message.updateContent(content);
-        return message;
+        return messageRepo.save(message);
     }
 
     @Override
     public void deleteById(UUID id) {
         findById(id);
         messageRepo.deleteById(id);
-
     }
 
 }

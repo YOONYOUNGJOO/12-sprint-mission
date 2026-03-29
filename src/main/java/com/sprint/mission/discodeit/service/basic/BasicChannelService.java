@@ -1,15 +1,19 @@
-package com.sprint.mission.discodeit.service.jcf;
+package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.jcf.JCFChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
-public class JCFChannelService implements ChannelService {
-    private final ChannelRepository channelRepo = new JCFChannelRepository();
+public class BasicChannelService implements ChannelService {
+    private final ChannelRepository channelRepo;
+
+    public BasicChannelService(ChannelRepository channelRepo) {
+        this.channelRepo = channelRepo;
+    }
 
     @Override
     public Channel create(ChannelType channelType, String channelName, String description) {
@@ -25,13 +29,12 @@ public class JCFChannelService implements ChannelService {
 
         Channel channel = new Channel(channelType, channelName, description);
         return channelRepo.save(channel);
-
     }
 
     @Override
     public Channel findById(UUID id) {
         Channel channel = channelRepo.findById(id);
-        if(channel == null){
+        if (channel == null) {
             throw new IllegalArgumentException("존재하지 않는 채널입니다.");
         }
         return channel;
@@ -39,7 +42,7 @@ public class JCFChannelService implements ChannelService {
 
     @Override
     public List<Channel> findAll() {
-        List<Channel> channels =  channelRepo.findAll();
+        List<Channel> channels = channelRepo.findAll();
         channels.sort((c1, c2) -> Long.compare(c1.getCreatedAt(), c2.getCreatedAt()));
         return channels;
     }
@@ -79,5 +82,4 @@ public class JCFChannelService implements ChannelService {
         findById(id);
         channelRepo.deleteById(id);
     }
-
 }

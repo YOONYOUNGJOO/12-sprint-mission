@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.service.file;
+package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
@@ -6,18 +6,21 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.file.FileChannelRepository;
-import com.sprint.mission.discodeit.repository.file.FileMessageRepository;
-import com.sprint.mission.discodeit.repository.file.FileUserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 
 import java.util.List;
 import java.util.UUID;
 
-public class FileMessageService implements MessageService {
-    private final MessageRepository messageRepo = new FileMessageRepository();
-    private final UserRepository userRepo = new FileUserRepository();
-    private final ChannelRepository channelRepo = new FileChannelRepository();
+public class BasicMessageService implements MessageService {
+    private final MessageRepository messageRepo;
+    private final UserRepository userRepo;
+    private final ChannelRepository channelRepo;
+
+    public BasicMessageService(MessageRepository messageRepo, UserRepository userRepo, ChannelRepository channelRepo) {
+        this.messageRepo = messageRepo;
+        this.userRepo = userRepo;
+        this.channelRepo = channelRepo;
+    }
 
     @Override
     public Message create(String content, UUID authorId, UUID channelId) {
@@ -54,7 +57,6 @@ public class FileMessageService implements MessageService {
         List<Message> messageList = messageRepo.findAll();
         messageList.sort((m1, m2) -> Long.compare(m1.getCreatedAt(), m2.getCreatedAt()));
         return messageList;
-
     }
 
     @Override

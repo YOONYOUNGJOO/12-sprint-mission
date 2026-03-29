@@ -13,13 +13,13 @@ public class JCFUserService implements UserService {
 
     @Override
     public User create(String username, String email, String password) {
-        if (username == null || username.trim().isEmpty()) {
+        if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("아이디에 공백을 입력할 수 없습니다.");
         }
-        if (email == null || email.trim().isEmpty()) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("이메일에 공백을 입력할 수 없습니다.");
         }
-        if (password == null || password.trim().isEmpty()) {
+        if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("비밀번호는 공백을 입력할 수 없습니다.");
         }
 
@@ -45,32 +45,32 @@ public class JCFUserService implements UserService {
 
     @Override
     public User updateUsername(UUID id, String username) {
-        if (username == null || username.trim().isEmpty()) {
+        if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("아이디에 공백을 입력할 수 없습니다.");
         }
         User user = findById(id);
         user.updateUsername(username);
-        return user;
+        return userRepo.save(user);
     }
 
     @Override
     public User updateEmail(UUID id, String email) {
-        if (email == null || email.trim().isEmpty()) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("이메일에 공백을 입력할 수 없습니다.");
         }
         User user = findById(id);
         user.updateEmail(email);
-        return user;
+        return userRepo.save(user);
     }
 
     @Override
     public User updatePassword(UUID id, String password) {
-        if (password == null || password.trim().isEmpty()) {
+        if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("비밀번호는 공백을 입력할 수 없습니다.");
         }
         User user = findById(id);
         user.updatePassword(password);
-        return user;
+        return userRepo.save(user);
     }
 
     @Override
