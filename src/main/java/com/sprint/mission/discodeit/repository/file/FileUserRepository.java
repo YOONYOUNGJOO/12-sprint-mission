@@ -4,73 +4,97 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 
 import java.io.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class FileUserRepository implements UserRepository {
-    private final File dir = new File("file");
-    private final File userFile = new File(dir, "user.dat");
+    private final Path DIRECTORY;
+    private final String EXTENSION = ".ser";
 
     public FileUserRepository() {
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        try {
-            if (!userFile.exists()) {
-                userFile.createNewFile();
+        this.DIRECTORY = Paths.get(System.getProperty("user.dir"), "file-data-map", User.class.getSimpleName());
+        if (Files.notExists(DIRECTORY)) {
+            try {
+                Files.createDirectories(DIRECTORY);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("파일을 생성할 수 없습니다.");
         }
     }
 
-    private Map<UUID, User> readUser() {
-        if (userFile.length() == 0) {
-            return new HashMap<>();
-        }
-        try (FileInputStream fis = new FileInputStream(userFile);
-             ObjectInputStream ois = new ObjectInputStream(fis);
-        ) {
-            Map<UUID, User> userMap = (Map<UUID, User>) ois.readObject();
-            return userMap;
-        } catch (Exception e) {
-            throw new RuntimeException("파일을 읽을 수 없습니다");
-        }
-    }
-
-    private void writeUser(Map<UUID, User> userMap) {
-        try (FileOutputStream fos = new FileOutputStream(userFile);
-             ObjectOutputStream oos = new ObjectOutputStream(fos);) {
-            oos.writeObject(userMap);
-        } catch (Exception e) {
-            throw new RuntimeException("파일을 저장할 수 없습니다");
-        }
+    private Path resolvePath(UUID id) {
+        return DIRECTORY.resolve(id + EXTENSION);
     }
 
     @Override
     public User save(User user) {
-        Map<UUID, User> userMap = readUser();
-        userMap.put(user.getUserId(), user);
-        writeUser(userMap);
+        Path path = resolvePath(user.getId());
+        try (
+                FileOutputStream fos = new FileOutputStream(path.toFile());
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
+        ) {
+            oos.writeObject(user);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return user;
     }
 
     @Override
-    public User findById(UUID id) {
-        Map<UUID, User> userMap = readUser();
-        return userMap.get(id);
-
+    public Optional<User> findById(UUID id) {
+        User userNullable = null;
+        Path path = resolvePath(id);
+        if (Files.exists(path)) {
+            try (
+                    FileInputStream fis = new FileInputStream(path.toFile());
+                    ObjectInputStream ois = new ObjectInputStream(fis)
+            ) {
+                userNullable = (User) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return Optional.ofNullable(userNullable);
     }
 
     @Override
     public List<User> findAll() {
-        Map<UUID, User> userMap = readUser();
-        return new ArrayList<>(userMap.values());
+        try {
+            return Files.list(DIRECTORY)
+                    .filter(path -> path.toString().endsWith(EXTENSION))
+                    .map(path -> {
+                        try (
+                                FileInputStream fis = new FileInputStream(path.toFile());
+                                ObjectInputStream ois = new ObjectInputStream(fis)
+                        ) {
+                            return (User) ois.readObject();
+                        } catch (IOException | ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        Path path = resolvePath(id);
+        return Files.exists(path);
     }
 
     @Override
     public void deleteById(UUID id) {
-        Map<UUID, User> userMap = readUser();
-        userMap.remove(id);
-        writeUser(userMap);
+        Path path = resolvePath(id);
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

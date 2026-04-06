@@ -1,39 +1,32 @@
 package com.sprint.mission.discodeit.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
 public class Message implements Serializable {
-    private final UUID messageId;
-    private final UUID userId;
-    private final UUID channelId;
-    private String content;
-    private final Long createdAt;
+    private static final long serialVersionUID = 1L;
+
+    private UUID id;
+    private Long createdAt;
     private Long updatedAt;
+    //
+    private String content;
+    //
+    private UUID channelId;
+    private UUID authorId;
 
-    public Message(String content, User user, Channel channel) {
-        messageId = UUID.randomUUID();
-        this.userId = user.getUserId();
-        this.channelId = channel.getChannelId();
+    public Message(String content, UUID channelId, UUID authorId) {
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now().getEpochSecond();
+        //
         this.content = content;
-        createdAt = System.currentTimeMillis();
-        updatedAt = System.currentTimeMillis();
+        this.channelId = channelId;
+        this.authorId = authorId;
     }
 
-    public UUID getMessageId() {
-        return messageId;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public UUID getChannelId() {
-        return channelId;
-    }
-
-    public String getContent() {
-        return content;
+    public UUID getId() {
+        return id;
     }
 
     public Long getCreatedAt() {
@@ -44,20 +37,27 @@ public class Message implements Serializable {
         return updatedAt;
     }
 
-    public void updateContent(String content) {
-        this.content = content;
-        updatedAt = System.currentTimeMillis();
+    public String getContent() {
+        return content;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "messageId=" + messageId +
-                ", userId=" + userId +
-                ", channelId=" + channelId +
-                ", content='" + content + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+    public UUID getChannelId() {
+        return channelId;
+    }
+
+    public UUID getAuthorId() {
+        return authorId;
+    }
+
+    public void update(String newContent) {
+        boolean anyValueUpdated = false;
+        if (newContent != null && !newContent.equals(this.content)) {
+            this.content = newContent;
+            anyValueUpdated = true;
+        }
+
+        if (anyValueUpdated) {
+            this.updatedAt = Instant.now().getEpochSecond();
+        }
     }
 }

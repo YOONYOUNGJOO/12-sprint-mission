@@ -5,79 +5,46 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
-public class BasicUserService implements UserService{
-    private final UserRepository userRepo;
+public class BasicUserService implements UserService {
+    private final UserRepository userRepository;
 
-    public BasicUserService(UserRepository userRepo) {
-        this.userRepo = userRepo;
+    public BasicUserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public User create(String username, String email, String password) {
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("아이디에 공백을 입력할 수 없습니다.");
-        }
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("이메일에 공백을 입력할 수 없습니다.");
-        }
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("비밀번호는 공백을 입력할 수 없습니다.");
-        }
         User user = new User(username, email, password);
-        return userRepo.save(user);
+        return userRepository.save(user);
     }
 
     @Override
-    public User findById(UUID id) {
-        User user = userRepo.findById(id);
-        if(user == null){
-            throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
-        }
-        return user;
+    public User find(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
     }
 
     @Override
     public List<User> findAll() {
-        List<User> userList = userRepo.findAll();
-        userList.sort((u1,u2) -> Long.compare(u1.getCreatedAt(), u2.getCreatedAt()));
-        return userList;
+        return userRepository.findAll();
     }
 
     @Override
-    public User updateUsername(UUID id, String username) {
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("아이디에 공백을 입력할 수 없습니다.");
+    public User update(UUID userId, String newUsername, String newEmail, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+        user.update(newUsername, newEmail, newPassword);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public void delete(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NoSuchElementException("User with id " + userId + " not found");
         }
-        User user = findById(id);
-        user.updateUsername(username);
-        return userRepo.save(user);
-    }
-
-    @Override
-    public User updateEmail(UUID id, String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("이메일에 공백을 입력할 수 없습니다.");
-        }
-        User user = findById(id);
-        user.updateEmail(email);
-        return userRepo.save(user);
-    }
-
-    @Override
-    public User updatePassword(UUID id, String password) {
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("비밀번호는 공백을 입력할 수 없습니다.");
-        }
-        User user = findById(id);
-        user.updatePassword(password);
-        return userRepo.save(user);
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        findById(id);
-        userRepo.deleteById(id);
+        userRepository.deleteById(userId);
     }
 }
