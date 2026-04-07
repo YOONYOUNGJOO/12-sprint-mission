@@ -1,12 +1,13 @@
-package com.sprint.mission.discodeit.entity;
+package com.sprint.mission.discodeit.domain.user;
 
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class UserStatus {
+public class UserStatus implements Serializable {
     private UUID id;
     private UUID userId;
     private Instant lastActiveAt;

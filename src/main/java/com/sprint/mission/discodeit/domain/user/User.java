@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.entity;
+package com.sprint.mission.discodeit.domain.user;
 
 import lombok.Getter;
 
@@ -30,7 +30,18 @@ public class User implements Serializable {
         this.password = password;
     }
 
-    public void update(String newUsername, String newEmail, String newPassword) {
+    public User(String username, String email, String password) {
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+        this.profileId = null;
+
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
+    public void update(String newUsername, String newEmail, String newPassword, UUID newProfileId) {
         boolean anyValueUpdated = false;
         if (newUsername != null && !newUsername.equals(this.username)) {
             this.username = newUsername;
@@ -42,6 +53,11 @@ public class User implements Serializable {
         }
         if (newPassword != null && !newPassword.equals(this.password)) {
             this.password = newPassword;
+            anyValueUpdated = true;
+        }
+
+        if (newProfileId != null && !newProfileId.equals(this.profileId)) {
+            this.profileId = newProfileId;
             anyValueUpdated = true;
         }
 

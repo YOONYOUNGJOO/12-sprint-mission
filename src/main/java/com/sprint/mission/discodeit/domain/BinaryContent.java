@@ -1,12 +1,13 @@
-package com.sprint.mission.discodeit.entity;
+package com.sprint.mission.discodeit.domain;
 
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class BinaryContent {
+public class BinaryContent implements Serializable {
     private UUID id;
     private Instant createdAt;
     //

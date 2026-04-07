@@ -1,10 +1,12 @@
-package com.sprint.mission.discodeit.repository.jcf;
+package com.sprint.mission.discodeit.repository.jcfimpl;
 
-import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.domain.user.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@Repository
 public class JCFUserRepository implements UserRepository {
     private final Map<UUID, User> data;
 
