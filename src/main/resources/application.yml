@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: discodeit
+
+spring_di:
+  service:
+    type: admin   # user | admin

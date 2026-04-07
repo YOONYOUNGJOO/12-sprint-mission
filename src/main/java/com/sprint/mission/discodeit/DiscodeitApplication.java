@@ -16,8 +16,13 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.basic.BasicChannelService;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
-public class JavaApplication {
+@SpringBootApplication
+public class DiscodeitApplication {
+
     static User setupUser(UserService userService) {
         return userService.create("woody", "woody@codeit.com", "woody1234");
     }
@@ -32,20 +37,17 @@ public class JavaApplication {
     }
 
     public static void main(String[] args) {
-        // 레포지토리 초기화
-        UserRepository userRepository = new FileUserRepository();
-        ChannelRepository channelRepository = new FileChannelRepository();
-        MessageRepository messageRepository = new FileMessageRepository();
-
+        ConfigurableApplicationContext context = SpringApplication.run(DiscodeitApplication.class, args);
         // 서비스 초기화
-        UserService userService = new BasicUserService(userRepository);
-        ChannelService channelService = new BasicChannelService(channelRepository);
-        MessageService messageService = new BasicMessageService(messageRepository, channelRepository, userRepository);
-
+        UserService userService = context.getBean(UserService.class);
+        ChannelService channelService = context.getBean(ChannelService.class);
+        MessageService messageService = context.getBean(MessageService.class);
         // 셋업
         User user = setupUser(userService);
         Channel channel = setupChannel(channelService);
         // 테스트
         messageCreateTest(messageService, channel, user);
     }
+
 }
+
