@@ -2,9 +2,11 @@ package com.sprint.mission.discodeit.repository.jcfimpl;
 
 import com.sprint.mission.discodeit.domain.message.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@Repository
 public class JCFMessageRepository implements MessageRepository {
     private final Map<UUID, Message> data;
 
@@ -26,6 +28,12 @@ public class JCFMessageRepository implements MessageRepository {
     @Override
     public List<Message> findAll() {
         return this.data.values().stream().toList();
+    }
+
+    @Override
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return findAll().stream().
+                filter(message -> message.getChannelId().equals(channelId)).toList();
     }
 
     @Override

@@ -51,7 +51,8 @@ public class BasicUserService implements UserService {
         userStatusRepository.save(userStatus);
         userRepository.save(user);
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), userStatus.isOnline());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),
+               user.getCreatedAt(), userStatus.isOnline());
     }
 
     @Override
@@ -62,7 +63,8 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), userStatus.isOnline());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),
+                user.getCreatedAt(), userStatus.isOnline());
     }
 
     @Override
@@ -77,7 +79,9 @@ public class BasicUserService implements UserService {
                             user.getId(),
                             user.getUsername(),
                             user.getEmail(),
+                            user.getCreatedAt(),
                             userStatus.isOnline()
+
                     );
                 })
                 .toList();
@@ -122,7 +126,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + user.getId()));
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), userStatus.isOnline());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),user.getCreatedAt(), userStatus.isOnline());
     }
 
     @Override
