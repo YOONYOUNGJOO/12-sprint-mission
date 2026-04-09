@@ -40,7 +40,7 @@ public class BasicUserService implements UserService {
 
         User user;
         if (dto.profile() != null) {
-            BinaryContent binaryContent = new BinaryContent(dto.profile().data(), dto.profile().filename());
+            BinaryContent binaryContent = new BinaryContent(dto.profile().data(), dto.profile().filename(), dto.profile().mimeType());
             binaryContentRepository.save(binaryContent);
             user = new User(binaryContent.getId(), dto.username(), dto.email(), dto.password());
         } else {
@@ -114,7 +114,7 @@ public class BasicUserService implements UserService {
             if (user.getProfileId() != null) {
                 binaryContentRepository.deleteById(user.getProfileId());
             }
-            BinaryContent binaryContent = new BinaryContent(dto.newProfile().data(), dto.newProfile().filename());
+            BinaryContent binaryContent = new BinaryContent(dto.newProfile().data(), dto.newProfile().filename(), dto.newProfile().mimeType());
             binaryContentRepository.save(binaryContent);
             user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), binaryContent.getId());
         } else {

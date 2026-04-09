@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.dto;
 
 public record BinaryContentCreateRequest (
         byte[] data,
-        String filename
+        String filename,
+        String mimeType
 ) {
 }
