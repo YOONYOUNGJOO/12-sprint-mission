@@ -20,6 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
+
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
     private final BinaryContentRepository binaryContentRepository;
@@ -39,20 +40,41 @@ public class BasicUserService implements UserService {
         }
 
         User user;
+
         if (dto.profile() != null) {
-            BinaryContent binaryContent = new BinaryContent(dto.profile().data(), dto.profile().filename(), dto.profile().mimeType());
+            BinaryContent binaryContent = new BinaryContent(
+                    dto.profile().data(),
+                    dto.profile().filename(),
+                    dto.profile().mimeType()
+            );
+
             binaryContentRepository.save(binaryContent);
-            user = new User(binaryContent.getId(), dto.username(), dto.email(), dto.password());
+
+            user = new User(
+                    binaryContent.getId(),
+                    dto.username(),
+                    dto.email(),
+                    dto.password()
+            );
         } else {
-            user = new User(dto.username(), dto.email(), dto.password());
+            user = new User(
+                    dto.username(),
+                    dto.email(),
+                    dto.password()
+            );
         }
 
         UserStatus userStatus = new UserStatus(user.getId());
         userStatusRepository.save(userStatus);
         userRepository.save(user);
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),
-               user.getCreatedAt(), userStatus.isOnline());
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getCreatedAt(),
+                userStatus.isOnline()
+        );
     }
 
     @Override
@@ -63,8 +85,13 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),
-                user.getCreatedAt(), userStatus.isOnline());
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getCreatedAt(),
+                userStatus.isOnline()
+        );
     }
 
     @Override
@@ -75,13 +102,13 @@ public class BasicUserService implements UserService {
                             .orElseThrow(() -> new NoSuchElementException(
                                     "No user status found for user id " + user.getId()
                             ));
+
                     return new UserResponse(
                             user.getId(),
                             user.getUsername(),
                             user.getEmail(),
                             user.getCreatedAt(),
                             userStatus.isOnline()
-
                     );
                 })
                 .toList();
@@ -91,8 +118,10 @@ public class BasicUserService implements UserService {
     public UserResponse update(UserUpdateRequest dto) {
         if (dto.newUsername() != null) {
             boolean existsUsername = userRepository.findAll().stream()
-                    .anyMatch(user -> !user.getId().equals(dto.userId())
-                            && user.getUsername().equals(dto.newUsername()));
+                    .anyMatch(user ->
+                            !user.getId().equals(dto.userId())
+                                    && user.getUsername().equals(dto.newUsername())
+                    );
             if (existsUsername) {
                 throw new IllegalArgumentException("Username already exists: " + dto.newUsername());
             }
@@ -100,8 +129,10 @@ public class BasicUserService implements UserService {
 
         if (dto.newEmail() != null) {
             boolean existsEmail = userRepository.findAll().stream()
-                    .anyMatch(user -> !user.getId().equals(dto.userId())
-                            && user.getEmail().equals(dto.newEmail()));
+                    .anyMatch(user ->
+                            !user.getId().equals(dto.userId())
+                                    && user.getEmail().equals(dto.newEmail())
+                    );
             if (existsEmail) {
                 throw new IllegalArgumentException("Email already exists: " + dto.newEmail());
             }
@@ -114,11 +145,28 @@ public class BasicUserService implements UserService {
             if (user.getProfileId() != null) {
                 binaryContentRepository.deleteById(user.getProfileId());
             }
-            BinaryContent binaryContent = new BinaryContent(dto.newProfile().data(), dto.newProfile().filename(), dto.newProfile().mimeType());
+
+            BinaryContent binaryContent = new BinaryContent(
+                    dto.newProfile().data(),
+                    dto.newProfile().filename(),
+                    dto.newProfile().mimeType()
+            );
+
             binaryContentRepository.save(binaryContent);
-            user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), binaryContent.getId());
+
+            user.update(
+                    dto.newUsername(),
+                    dto.newEmail(),
+                    dto.newPassword(),
+                    binaryContent.getId()
+            );
         } else {
-            user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), user.getProfileId());
+            user.update(
+                    dto.newUsername(),
+                    dto.newEmail(),
+                    dto.newPassword(),
+                    user.getProfileId()
+            );
         }
 
         userRepository.save(user);
@@ -126,7 +174,13 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + user.getId()));
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(),user.getCreatedAt(), userStatus.isOnline());
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getCreatedAt(),
+                userStatus.isOnline()
+        );
     }
 
     @Override

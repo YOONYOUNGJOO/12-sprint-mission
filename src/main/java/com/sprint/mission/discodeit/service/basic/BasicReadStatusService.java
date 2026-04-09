@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.domain.ReadStatus;
+import com.sprint.mission.discodeit.domain.user.UserStatus;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
@@ -41,8 +42,14 @@ public class BasicReadStatusService implements ReadStatusService {
 
         ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId());
         readStatusRepository.save(readStatus);
-        return new ReadStatusResponse(readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(),
-                readStatus.getReadAt(), readStatus.getCreatedAt());
+
+        return new ReadStatusResponse(
+                readStatus.getId(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getReadAt(),
+                readStatus.getCreatedAt()
+        );
     }
 
     @Override
@@ -50,22 +57,25 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("ReadStatus with id " + id + " not found"));
 
-        return new ReadStatusResponse(readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(),
-                readStatus.getReadAt(), readStatus.getCreatedAt());
+        return new ReadStatusResponse(readStatus.getId(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getReadAt(),
+                readStatus.getCreatedAt()
+        );
     }
 
     @Override
     public List<ReadStatusResponse> findAllByUserId(UUID userId) {
-        List<ReadStatus> readStatusList = readStatusRepository.findAllByUserId(userId);
-        List<ReadStatusResponse> readStatusResponseList = new ArrayList<>();
-
-        for (ReadStatus readStatus : readStatusList) {
-            ReadStatusResponse readStatusResponse = new ReadStatusResponse(readStatus.getId(), readStatus.getUserId()
-                    , readStatus.getChannelId(), readStatus.getReadAt(), readStatus.getCreatedAt());
-            readStatusResponseList.add(readStatusResponse);
-        }
-
-        return readStatusResponseList;
+        return readStatusRepository.findAllByUserId(userId).stream()
+                .map(readStatus -> new ReadStatusResponse(
+                        readStatus.getId(),
+                        readStatus.getUserId(),
+                        readStatus.getChannelId(),
+                        readStatus.getReadAt(),
+                        readStatus.getCreatedAt()
+                ))
+                .toList();
     }
 
     @Override
@@ -76,8 +86,13 @@ public class BasicReadStatusService implements ReadStatusService {
         readStatus.update(dto.newReadAt());
         readStatusRepository.save(readStatus);
 
-        return new ReadStatusResponse(readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(),
-                readStatus.getReadAt(), readStatus.getCreatedAt());
+        return new ReadStatusResponse(
+                readStatus.getId(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getReadAt(),
+                readStatus.getCreatedAt()
+        );
     }
 
     @Override
