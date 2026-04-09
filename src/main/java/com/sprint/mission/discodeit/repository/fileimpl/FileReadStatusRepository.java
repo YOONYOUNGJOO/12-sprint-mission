@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.repository.fileimpl;
 
-import com.sprint.mission.discodeit.domain.user.User;
-import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.domain.ReadStatus;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -20,18 +20,18 @@ import java.util.UUID;
         name = "type",
         havingValue = "file"
 )
-public class FileUserRepository implements UserRepository {
+public class FileReadStatusRepository implements ReadStatusRepository {
 
     private final Path DIRECTORY;
     private final String EXTENSION = ".ser";
 
-    public FileUserRepository(
+    public FileReadStatusRepository(
             @Value("${discodeit.repository.file-directory}") String fileDirectory
     ) {
         this.DIRECTORY = Paths.get(
                 System.getProperty("user.dir"),
                 fileDirectory,
-                User.class.getSimpleName()
+                ReadStatus.class.getSimpleName()
         );
 
         if (Files.notExists(DIRECTORY)) {
@@ -48,24 +48,24 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public User save(User user) {
-        Path path = resolvePath(user.getId());
+    public ReadStatus save(ReadStatus readStatus) {
+        Path path = resolvePath(readStatus.getId());
 
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
                 ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
-            oos.writeObject(user);
+            oos.writeObject(readStatus);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save user with id " + user.getId(), e);
+            throw new RuntimeException("Failed to save read status with id " + readStatus.getId(), e);
         }
 
-        return user;
+        return readStatus;
     }
 
     @Override
-    public Optional<User> findById(UUID id) {
-        User userNullable = null;
+    public Optional<ReadStatus> findById(UUID id) {
+        ReadStatus readStatusNullable = null;
         Path path = resolvePath(id);
 
         if (Files.exists(path)) {
@@ -73,17 +73,17 @@ public class FileUserRepository implements UserRepository {
                     FileInputStream fis = new FileInputStream(path.toFile());
                     ObjectInputStream ois = new ObjectInputStream(fis)
             ) {
-                userNullable = (User) ois.readObject();
+                readStatusNullable = (ReadStatus) ois.readObject();
             } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException("Failed to read user with id " + id, e);
+                throw new RuntimeException("Failed to read read status with id " + id, e);
             }
         }
 
-        return Optional.ofNullable(userNullable);
+        return Optional.ofNullable(readStatusNullable);
     }
 
     @Override
-    public List<User> findAll() {
+    public List<ReadStatus> findAll() {
         try {
             return Files.list(DIRECTORY)
                     .filter(path -> path.toString().endsWith(EXTENSION))
@@ -92,15 +92,39 @@ public class FileUserRepository implements UserRepository {
                                 FileInputStream fis = new FileInputStream(path.toFile());
                                 ObjectInputStream ois = new ObjectInputStream(fis)
                         ) {
-                            return (User) ois.readObject();
+                            return (ReadStatus) ois.readObject();
                         } catch (IOException | ClassNotFoundException e) {
-                            throw new RuntimeException("Failed to read user file: " + path.getFileName(), e);
+                            throw new RuntimeException("Failed to read read status file: " + path.getFileName(), e);
                         }
                     })
                     .toList();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read all users from directory: " + DIRECTORY, e);
+            throw new RuntimeException("Failed to read all read status files from directory: " + DIRECTORY, e);
         }
+    }
+
+    @Override
+    public Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID channelId) {
+        return findAll().stream()
+                .filter(status ->
+                        status.getUserId().equals(userId)
+                                && status.getChannelId().equals(channelId)
+                )
+                .findFirst();
+    }
+
+    @Override
+    public List<ReadStatus> findAllByUserId(UUID userId) {
+        return findAll().stream()
+                .filter(status -> status.getUserId().equals(userId))
+                .toList();
+    }
+
+    @Override
+    public List<ReadStatus> findAllByChannelId(UUID channelId) {
+        return findAll().stream()
+                .filter(status -> status.getChannelId().equals(channelId))
+                .toList();
     }
 
     @Override
@@ -116,7 +140,7 @@ public class FileUserRepository implements UserRepository {
         try {
             Files.delete(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete user with id " + id, e);
+            throw new RuntimeException("Failed to delete read status with id " + id, e);
         }
     }
 }

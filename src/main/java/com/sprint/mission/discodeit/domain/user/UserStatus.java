@@ -8,16 +8,23 @@ import java.util.UUID;
 
 @Getter
 public class UserStatus implements Serializable {
-    private UUID id;
-    private UUID userId;
-    private Instant lastActiveAt;
-    private Instant createdAt;
+    private static final long serialVersionUID = 1L;
+
+    private final UUID id;
+    private final Instant createdAt;
     private Instant updatedAt;
+
+    private Instant lastActiveAt;
+
+    private final UUID userId;
+
+
 
     public UserStatus(UUID userId) {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+
         this.lastActiveAt = Instant.now();
 
         this.userId = userId;
@@ -37,10 +44,10 @@ public class UserStatus implements Serializable {
     public String toString() {
         return "UserStatus{" +
                 "id=" + id +
-                ", userId=" + userId +
-                ", lastActiveAt=" + lastActiveAt +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
+                ", lastActiveAt=" + lastActiveAt +
+                ", userId=" + userId +
                 '}';
     }
 }

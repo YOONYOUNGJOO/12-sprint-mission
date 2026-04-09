@@ -8,16 +8,19 @@ import java.util.UUID;
 
 @Getter
 public class BinaryContent implements Serializable {
-    private UUID id;
-    private Instant createdAt;
-    //
-    private String mimeType;
-    private byte[] data;
-    private String filename;
+    private static final long serialVersionUID = 1L;
+
+    private final UUID id;
+    private final Instant createdAt;
+
+    private final String mimeType;
+    private final byte[] data;
+    private final String filename;
 
     public BinaryContent(byte[] data, String filename,String mimeType ) {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
+
         this.data = data;
         this.filename = filename;
         this.mimeType = mimeType;

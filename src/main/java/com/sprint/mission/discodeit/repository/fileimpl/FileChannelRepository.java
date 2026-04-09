@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.fileimpl;
 
 import com.sprint.mission.discodeit.domain.channel.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -13,17 +15,30 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
+@ConditionalOnProperty(
+        prefix = "discodeit.repository",
+        name = "type",
+        havingValue = "file"
+)
 public class FileChannelRepository implements ChannelRepository {
+
     private final Path DIRECTORY;
     private final String EXTENSION = ".ser";
 
-    public FileChannelRepository() {
-        this.DIRECTORY = Paths.get(System.getProperty("user.dir"), "file-data-map", Channel.class.getSimpleName());
+    public FileChannelRepository(
+            @Value("${discodeit.repository.file-directory}") String fileDirectory
+    ) {
+        this.DIRECTORY = Paths.get(
+                System.getProperty("user.dir"),
+                fileDirectory,
+                Channel.class.getSimpleName()
+        );
+
         if (Files.notExists(DIRECTORY)) {
             try {
                 Files.createDirectories(DIRECTORY);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
             }
         }
     }
@@ -35,14 +50,16 @@ public class FileChannelRepository implements ChannelRepository {
     @Override
     public Channel save(Channel channel) {
         Path path = resolvePath(channel.getId());
+
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
                 ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(channel);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to save channel with id " + channel.getId(), e);
         }
+
         return channel;
     }
 
@@ -50,6 +67,7 @@ public class FileChannelRepository implements ChannelRepository {
     public Optional<Channel> findById(UUID id) {
         Channel channelNullable = null;
         Path path = resolvePath(id);
+
         if (Files.exists(path)) {
             try (
                     FileInputStream fis = new FileInputStream(path.toFile());
@@ -57,9 +75,10 @@ public class FileChannelRepository implements ChannelRepository {
             ) {
                 channelNullable = (Channel) ois.readObject();
             } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Failed to read channel with id " + id, e);
             }
         }
+
         return Optional.ofNullable(channelNullable);
     }
 
@@ -75,12 +94,12 @@ public class FileChannelRepository implements ChannelRepository {
                         ) {
                             return (Channel) ois.readObject();
                         } catch (IOException | ClassNotFoundException e) {
-                            throw new RuntimeException(e);
+                            throw new RuntimeException("Failed to read channel file: " + path.getFileName(), e);
                         }
                     })
                     .toList();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to read all channels from directory: " + DIRECTORY, e);
         }
     }
 
@@ -93,10 +112,11 @@ public class FileChannelRepository implements ChannelRepository {
     @Override
     public void deleteById(UUID id) {
         Path path = resolvePath(id);
+
         try {
             Files.delete(path);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to delete channel with id " + id, e);
         }
     }
 }

@@ -38,6 +38,7 @@ public class BasicMessageService implements MessageService {
         }
 
         List<UUID> attachmentIds = new ArrayList<>();
+
         if (dto.attachments() != null) {
             for (BinaryContentCreateRequest request : dto.attachments()) {
                 BinaryContent content = new BinaryContent(request.data(), request.filename(), request.mimeType());
@@ -46,19 +47,39 @@ public class BasicMessageService implements MessageService {
             }
         }
 
-        Message message = new Message(dto.content(), dto.channelId(), dto.authorId(), attachmentIds);
+        Message message = new Message(
+                dto.content(),
+                dto.channelId(),
+                dto.authorId(),
+                attachmentIds
+        );
+
         messageRepository.save(message);
-        return new MessageResponse(message.getId(), message.getCreatedAt(), message.getContent(),
-                message.getChannelId(), message.getAuthorId(), message.getAttachmentIds());
+
+        return new MessageResponse(
+                message.getId(),
+                message.getCreatedAt(),
+                message.getContent(),
+                message.getChannelId(),
+                message.getAuthorId(),
+                message.getAttachmentIds()
+        );
     }
 
     @Override
     public List<MessageResponse> findAllByChannelId(UUID channelId) {
         List<Message> messageList = messageRepository.findAllByChannelId(channelId);
         List<MessageResponse> messageResponseList = new ArrayList<>();
+
         for (Message message : messageList) {
-            MessageResponse messageResponse = new MessageResponse(message.getId(), message.getCreatedAt(),
-                    message.getContent(), message.getChannelId(), message.getAuthorId(), message.getAttachmentIds());
+            MessageResponse messageResponse = new MessageResponse(
+                    message.getId(),
+                    message.getCreatedAt(),
+                    message.getContent(),
+                    message.getChannelId(),
+                    message.getAuthorId(),
+                    message.getAttachmentIds()
+            );
             messageResponseList.add(messageResponse);
         }
         return messageResponseList;
@@ -68,16 +89,25 @@ public class BasicMessageService implements MessageService {
     public MessageResponse update(MessageUpdateRequest dto) {
         Message message = messageRepository.findById(dto.messageId())
                 .orElseThrow(() -> new NoSuchElementException("Message with id " + dto.messageId() + " not found"));
+
         message.update(dto.newContent());
         messageRepository.save(message);
-        return new MessageResponse(message.getId(), message.getCreatedAt(),
-                message.getContent(), message.getChannelId(), message.getAuthorId(), message.getAttachmentIds());
+
+        return new MessageResponse(
+                message.getId(),
+                message.getCreatedAt(),
+                message.getContent(),
+                message.getChannelId(),
+                message.getAuthorId(),
+                message.getAttachmentIds()
+        );
     }
 
     @Override
     public void delete(UUID messageId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new NoSuchElementException("Message with id " + messageId + " not found"));
+
         for (UUID attachmentId : message.getAttachmentIds()) {
             binaryContentRepository.deleteById(attachmentId);
         }

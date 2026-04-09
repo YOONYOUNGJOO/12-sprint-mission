@@ -32,10 +32,17 @@ public class BasicChannelService implements ChannelService {
     public ChannelResponse createPublicChannel(CreatePublicChannelRequest dto) {
         ChannelType channelType = ChannelType.PUBLIC;
         Channel channel = new Channel(channelType, dto.name(), dto.description());
+
         channelRepository.save(channel);
 
-        return new ChannelResponse(channel.getId(), channelType, channel.getName(),
-                channel.getDescription(), channel.getCreatedAt(), null, List.of());
+        return new ChannelResponse(channel.getId(),
+                channelType,
+                channel.getName(),
+                channel.getDescription(),
+                channel.getCreatedAt(),
+                null,
+                List.of()
+        );
     }
 
     @Override
@@ -49,8 +56,15 @@ public class BasicChannelService implements ChannelService {
             readStatusRepository.save(readStatus);
         }
 
-        return new ChannelResponse(channel.getId(), channelType, channel.getName(),
-                channel.getDescription(), channel.getCreatedAt(), null, dto.userIds());
+        return new ChannelResponse(
+                channel.getId(),
+                channelType,
+                channel.getName(),
+                channel.getDescription(),
+                channel.getCreatedAt(),
+                null,
+                dto.userIds()
+        );
     }
 
     @Override
@@ -65,11 +79,19 @@ public class BasicChannelService implements ChannelService {
 
         if (channel.getType() == ChannelType.PRIVATE) {
             participantUserIds = readStatusRepository.findAllByChannelId(channelId).stream()
-                    .map(ReadStatus::getUserId).toList();
+                    .map(ReadStatus::getUserId)
+                    .toList();
         }
 
-        return new ChannelResponse(channel.getId(), channel.getType(), channel.getName(),
-                channel.getDescription(), channel.getCreatedAt(), latestMessageAt, participantUserIds);
+        return new ChannelResponse(
+                channel.getId(),
+                channel.getType(),
+                channel.getName(),
+                channel.getDescription(),
+                channel.getCreatedAt(),
+                latestMessageAt,
+                participantUserIds
+        );
     }
 
     @Override
@@ -81,17 +103,29 @@ public class BasicChannelService implements ChannelService {
             Instant latestMessageAt = getLatestMessageAt(channel.getId());
 
             if (channel.getType() == ChannelType.PUBLIC) {
-                ChannelResponse channelResponse = new ChannelResponse(channel.getId(), channel.getType(), channel.getName(),
-                        channel.getDescription(), channel.getCreatedAt(), latestMessageAt, List.of());
+                ChannelResponse channelResponse = new ChannelResponse(
+                        channel.getId(),
+                        channel.getType(),
+                        channel.getName(),
+                        channel.getDescription(),
+                        channel.getCreatedAt(),
+                        latestMessageAt, List.of()
+                );
                 channelResponseList.add(channelResponse);
             } else if (channel.getType() == ChannelType.PRIVATE) {
                 if (readStatusRepository.findByUserIdAndChannelId(userId, channel.getId()).isPresent()) {
                     List<UUID> participantUserIds = readStatusRepository.findAllByChannelId(channel.getId())
                             .stream().map(ReadStatus::getUserId).toList();
 
-                    ChannelResponse channelResponse = new ChannelResponse(channel.getId(), channel.getType(),
-                            channel.getName(), channel.getDescription(), channel.getCreatedAt(), latestMessageAt,
-                            participantUserIds);
+                    ChannelResponse channelResponse = new ChannelResponse(
+                            channel.getId(),
+                            channel.getType(),
+                            channel.getName(),
+                            channel.getDescription(),
+                            channel.getCreatedAt(),
+                            latestMessageAt,
+                            participantUserIds
+                    );
                     channelResponseList.add(channelResponse);
                 }
             }
@@ -103,15 +137,24 @@ public class BasicChannelService implements ChannelService {
     public ChannelResponse update(ChannelUpdateRequest dto) {
         Channel channel = channelRepository.findById(dto.channelId())
                 .orElseThrow(() -> new NoSuchElementException("Channel with id " + dto.channelId() + " not found"));
+
         if (channel.getType() == ChannelType.PRIVATE) {
             throw new IllegalStateException("Private channel cannot be updated");
         }
+
         Instant latestMessageAt = getLatestMessageAt(channel.getId());
 
         channel.update(dto.newName(), dto.newDescription());
         channelRepository.save(channel);
-        return new ChannelResponse(channel.getId(), channel.getType(), channel.getName(),
-                channel.getDescription(), channel.getCreatedAt(), latestMessageAt, List.of());
+        return new ChannelResponse(
+                channel.getId(),
+                channel.getType(),
+                channel.getName(),
+                channel.getDescription(),
+                channel.getCreatedAt(),
+                latestMessageAt,
+                List.of()
+        );
     }
 
     @Override

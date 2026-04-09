@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.repository.fileimpl;
 
-import com.sprint.mission.discodeit.domain.user.User;
-import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.domain.BinaryContent;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -20,18 +20,18 @@ import java.util.UUID;
         name = "type",
         havingValue = "file"
 )
-public class FileUserRepository implements UserRepository {
+public class FileBinaryContentRepository implements BinaryContentRepository {
 
     private final Path DIRECTORY;
     private final String EXTENSION = ".ser";
 
-    public FileUserRepository(
+    public FileBinaryContentRepository(
             @Value("${discodeit.repository.file-directory}") String fileDirectory
     ) {
         this.DIRECTORY = Paths.get(
                 System.getProperty("user.dir"),
                 fileDirectory,
-                User.class.getSimpleName()
+                BinaryContent.class.getSimpleName()
         );
 
         if (Files.notExists(DIRECTORY)) {
@@ -48,24 +48,24 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public User save(User user) {
-        Path path = resolvePath(user.getId());
+    public BinaryContent save(BinaryContent binaryContent) {
+        Path path = resolvePath(binaryContent.getId());
 
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
                 ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
-            oos.writeObject(user);
+            oos.writeObject(binaryContent);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save user with id " + user.getId(), e);
+            throw new RuntimeException("Failed to save binary content with id " + binaryContent.getId(), e);
         }
 
-        return user;
+        return binaryContent;
     }
 
     @Override
-    public Optional<User> findById(UUID id) {
-        User userNullable = null;
+    public Optional<BinaryContent> findById(UUID id) {
+        BinaryContent binaryContentNullable = null;
         Path path = resolvePath(id);
 
         if (Files.exists(path)) {
@@ -73,34 +73,22 @@ public class FileUserRepository implements UserRepository {
                     FileInputStream fis = new FileInputStream(path.toFile());
                     ObjectInputStream ois = new ObjectInputStream(fis)
             ) {
-                userNullable = (User) ois.readObject();
+                binaryContentNullable = (BinaryContent) ois.readObject();
             } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException("Failed to read user with id " + id, e);
+                throw new RuntimeException("Failed to read binary content with id " + id, e);
             }
         }
 
-        return Optional.ofNullable(userNullable);
+        return Optional.ofNullable(binaryContentNullable);
     }
 
     @Override
-    public List<User> findAll() {
-        try {
-            return Files.list(DIRECTORY)
-                    .filter(path -> path.toString().endsWith(EXTENSION))
-                    .map(path -> {
-                        try (
-                                FileInputStream fis = new FileInputStream(path.toFile());
-                                ObjectInputStream ois = new ObjectInputStream(fis)
-                        ) {
-                            return (User) ois.readObject();
-                        } catch (IOException | ClassNotFoundException e) {
-                            throw new RuntimeException("Failed to read user file: " + path.getFileName(), e);
-                        }
-                    })
-                    .toList();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read all users from directory: " + DIRECTORY, e);
-        }
+    public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
+        return ids.stream()
+                .distinct()
+                .map(this::findById)
+                .flatMap(Optional::stream)
+                .toList();
     }
 
     @Override
@@ -116,7 +104,7 @@ public class FileUserRepository implements UserRepository {
         try {
             Files.delete(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete user with id " + id, e);
+            throw new RuntimeException("Failed to delete binary content with id " + id, e);
         }
     }
 }

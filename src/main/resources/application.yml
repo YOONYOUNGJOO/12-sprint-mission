@@ -2,6 +2,7 @@ spring:
   application:
     name: discodeit
 
-spring_di:
-  service:
-    type: admin   # user | admin
+discodeit:
+  repository:
+    type: file   # jcf | file
+    file-directory: .discodeit

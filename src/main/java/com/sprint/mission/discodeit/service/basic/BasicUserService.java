@@ -58,6 +58,7 @@ public class BasicUserService implements UserService {
             );
         } else {
             user = new User(
+                    null,
                     dto.username(),
                     dto.email(),
                     dto.password()
