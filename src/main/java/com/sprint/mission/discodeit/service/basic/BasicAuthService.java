@@ -1,8 +1,11 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.domain.user.User;
-import com.sprint.mission.discodeit.dto.AuthLoginRequest;
+import com.sprint.mission.discodeit.domain.user.UserStatus;
+import com.sprint.mission.discodeit.dto.Auth.AuthLoginRequest;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import org.springframework.stereotype.Service;
 
@@ -11,20 +14,37 @@ import java.util.Optional;
 
 @Service
 public class BasicAuthService implements AuthService {
-    private final UserRepository userRepository;
 
-    public BasicAuthService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final UserStatusRepository userStatusRepository;
+
+    public BasicAuthService(UserRepository userRepository, UserStatusRepository userStatusRepository) {
         this.userRepository = userRepository;
+        this.userStatusRepository = userStatusRepository;
     }
 
     @Override
-    public User login(AuthLoginRequest dto) {
-        Optional<User> user = userRepository.findAll().stream().
-                filter(u -> u.getUsername().equals(dto.username()) &&
-                                u.getPassword().equals(dto.password())).findFirst();
+    public UserResponse login(AuthLoginRequest dto) {
+        Optional<User> user = userRepository.findAll().stream()
+                .filter(u -> u.getUsername().equals(dto.username())
+                        && u.getPassword().equals(dto.password()))
+                .findFirst();
+
         if (user.isEmpty()) {
-            throw new NoSuchElementException("No user found matching username and password");
+            throw new NoSuchElementException("Invalid username or password");
         }
-        return user.get();
+
+        User foundUser = user.get();
+
+        UserStatus userStatus = userStatusRepository.findByUserId(foundUser.getId())
+                .orElseThrow(() -> new NoSuchElementException("User status not found"));
+
+        return new UserResponse(
+                foundUser.getId(),
+                foundUser.getUsername(),
+                foundUser.getEmail(),
+                foundUser.getCreatedAt(),
+                userStatus.isOnline()
+        );
     }
 }
