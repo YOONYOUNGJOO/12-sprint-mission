@@ -13,7 +13,9 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -115,7 +117,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public UserResponse update(UUID userId , UserUpdateRequest dto, Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+    public UserResponse update(UUID userId, UserUpdateRequest dto, MultipartFile profile) {
         if (dto.newUsername() != null) {
             boolean existsUsername = userRepository.findAll().stream()
                     .anyMatch(user ->
@@ -141,25 +143,29 @@ public class BasicUserService implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
 
-        UUID nullableProfileId = optionalProfileCreateRequest
-                .map(profileRequest -> {
-                    Optional.ofNullable(user.getProfileId())
-                            .ifPresent(binaryContentRepository::deleteById);
+        UUID profileId = user.getProfileId();
 
+        if (profile != null && !profile.isEmpty()) {
+            try {
+                Optional.ofNullable(user.getProfileId())
+                        .ifPresent(binaryContentRepository::deleteById);
 
-                    BinaryContent binaryContent = new BinaryContent(
-                            profileRequest.data(),
-                            profileRequest.filename(),
-                            profileRequest.mimeType());
-                    return binaryContentRepository.save(binaryContent).getId();
-                })
-                .orElse(null);
+                BinaryContent binaryContent = new BinaryContent(
+                        profile.getBytes(),
+                        profile.getOriginalFilename(),
+                        profile.getContentType()
+                );
+                profileId = binaryContentRepository.save(binaryContent).getId();
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to read profile file", e);
+            }
+        }
 
         user.update(
                 dto.newUsername(),
                 dto.newEmail(),
                 dto.newPassword(),
-                nullableProfileId != null ? nullableProfileId : user.getProfileId()
+                profileId
         );
 
         userRepository.save(user);
