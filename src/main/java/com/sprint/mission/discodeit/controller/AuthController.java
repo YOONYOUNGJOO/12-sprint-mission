@@ -18,8 +18,18 @@ public class AuthController {
     private final AuthService authService;
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public ResponseEntity<UserResponse> login(@RequestBody AuthLoginRequest authLoginRequest){
-        UserResponse user = authService.login(authLoginRequest);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserResponse> login(@RequestBody AuthLoginRequest authLoginRequest) {
+        UserResponse userResponse = authService.login(authLoginRequest);
+        return ResponseEntity.ok(userResponse);
     }
 }
+
+// {
+//        "id": "1038b2f2-6764-4427-af2b-d7661881a80e",
+//                "username": "buzz",
+//                "email": "buzz@test.com",
+//                "createdAt": "2026-04-09T08:29:21.435032Z",
+//                "updatedAt": "2026-04-09T08:29:21.435032Z",
+//                "profileId": null,
+//                "online": false
+//                },

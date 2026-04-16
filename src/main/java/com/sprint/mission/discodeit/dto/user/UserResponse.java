@@ -7,7 +7,9 @@ public record UserResponse(
         UUID id,
         String username,
         String email,
-        Instant createAt,
-        boolean online
+        Instant createdAt,
+        Instant updatedAt,
+        UUID profileId,
+        Boolean online
 ) {
 }

@@ -8,7 +8,6 @@ import java.util.UUID;
 public record MessageCreateRequest(
         String content,
         UUID channelId,
-        UUID authorId,
-        List<BinaryContentCreateRequest> attachments
+        UUID authorId
 ) {
 }

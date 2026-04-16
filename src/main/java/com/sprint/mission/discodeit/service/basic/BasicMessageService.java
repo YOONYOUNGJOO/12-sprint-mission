@@ -28,7 +28,7 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public MessageResponse create(MessageCreateRequest dto) {
+    public MessageResponse create(MessageCreateRequest dto, List<BinaryContentCreateRequest> binaryContentCreateRequests) {
         if (!channelRepository.existsById(dto.channelId())) {
             throw new NoSuchElementException("Channel not found with id " + dto.channelId());
         }
@@ -37,15 +37,16 @@ public class BasicMessageService implements MessageService {
             throw new NoSuchElementException("Author not found with id " + dto.authorId());
         }
 
-        List<UUID> attachmentIds = new ArrayList<>();
-
-        if (dto.attachments() != null) {
-            for (BinaryContentCreateRequest request : dto.attachments()) {
-                BinaryContent content = new BinaryContent(request.data(), request.filename(), request.mimeType());
-                binaryContentRepository.save(content);
-                attachmentIds.add(content.getId());
-            }
-        }
+        List<UUID> attachmentIds = binaryContentCreateRequests.stream()
+                .map(attachmentRequest -> {
+                    BinaryContent binaryContent = new BinaryContent(
+                            attachmentRequest.data(),
+                            attachmentRequest.filename(),
+                            attachmentRequest.mimeType());
+                    BinaryContent createdBinaryContent = binaryContentRepository.save(binaryContent);
+                    return createdBinaryContent.getId();
+                })
+                .toList();
 
         Message message = new Message(
                 dto.content(),
@@ -53,7 +54,6 @@ public class BasicMessageService implements MessageService {
                 dto.authorId(),
                 attachmentIds
         );
-
         messageRepository.save(message);
 
         return new MessageResponse(
@@ -64,6 +64,12 @@ public class BasicMessageService implements MessageService {
                 message.getAuthorId(),
                 message.getAttachmentIds()
         );
+    }
+
+    @Override
+    public Message find(UUID messageId) {
+        return messageRepository.findById(messageId)
+                .orElseThrow(() -> new NoSuchElementException("Message with id " + messageId + " not found"));
     }
 
     @Override
@@ -86,9 +92,9 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public MessageResponse update(MessageUpdateRequest dto) {
-        Message message = messageRepository.findById(dto.messageId())
-                .orElseThrow(() -> new NoSuchElementException("Message with id " + dto.messageId() + " not found"));
+    public MessageResponse update(UUID messageId, MessageUpdateRequest dto) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new NoSuchElementException("Message with id " + messageId + " not found"));
 
         message.update(dto.newContent());
         messageRepository.save(message);

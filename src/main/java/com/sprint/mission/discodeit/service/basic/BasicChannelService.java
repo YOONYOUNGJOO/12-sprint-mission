@@ -52,7 +52,7 @@ public class BasicChannelService implements ChannelService {
         channelRepository.save(channel);
 
         for (UUID userId : dto.userIds()) {
-            ReadStatus readStatus = new ReadStatus(userId, channel.getId());
+            ReadStatus readStatus = new ReadStatus(userId, channel.getId(), Instant.MIN);
             readStatusRepository.save(readStatus);
         }
 
@@ -134,9 +134,9 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelResponse update(ChannelUpdateRequest dto) {
-        Channel channel = channelRepository.findById(dto.channelId())
-                .orElseThrow(() -> new NoSuchElementException("Channel with id " + dto.channelId() + " not found"));
+    public ChannelResponse update(UUID channelId , ChannelUpdateRequest dto) {
+        Channel channel = channelRepository.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("Channel with id " + channelId + " not found"));
 
         if (channel.getType() == ChannelType.PRIVATE) {
             throw new IllegalStateException("Private channel cannot be updated");

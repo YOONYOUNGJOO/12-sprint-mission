@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.domain.BinaryContent;
 import com.sprint.mission.discodeit.domain.user.User;
 import com.sprint.mission.discodeit.domain.user.UserStatus;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
@@ -13,8 +14,10 @@ import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -26,7 +29,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public UserResponse create(UserCreateRequest dto) {
+    public UserResponse create(UserCreateRequest dto, Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
         boolean existsUsername = userRepository.findAll().stream()
                 .anyMatch(user -> user.getUsername().equals(dto.username()));
         if (existsUsername) {
@@ -39,33 +42,23 @@ public class BasicUserService implements UserService {
             throw new IllegalArgumentException("Email already exists: " + dto.email());
         }
 
-        User user;
+        UUID nullableProfileId = optionalProfileCreateRequest
+                .map(profileRequest -> {
+                    BinaryContent binaryContent = new BinaryContent(
+                            profileRequest.data(),
+                            profileRequest.filename(),
+                            profileRequest.mimeType());
+                    return binaryContentRepository.save(binaryContent).getId();
+                })
+                .orElse(null);
 
-        if (dto.profile() != null) {
-            BinaryContent binaryContent = new BinaryContent(
-                    dto.profile().data(),
-                    dto.profile().filename(),
-                    dto.profile().mimeType()
-            );
+        User user = new User(
+                nullableProfileId,
+                dto.username(),
+                dto.email(),
+                dto.password());
 
-            binaryContentRepository.save(binaryContent);
-
-            user = new User(
-                    binaryContent.getId(),
-                    dto.username(),
-                    dto.email(),
-                    dto.password()
-            );
-        } else {
-            user = new User(
-                    null,
-                    dto.username(),
-                    dto.email(),
-                    dto.password()
-            );
-        }
-
-        UserStatus userStatus = new UserStatus(user.getId());
+        UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepository.save(userStatus);
         userRepository.save(user);
 
@@ -74,6 +67,8 @@ public class BasicUserService implements UserService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getProfileId(),
                 userStatus.isOnline()
         );
     }
@@ -91,6 +86,8 @@ public class BasicUserService implements UserService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getProfileId(),
                 userStatus.isOnline()
         );
     }
@@ -109,6 +106,8 @@ public class BasicUserService implements UserService {
                             user.getUsername(),
                             user.getEmail(),
                             user.getCreatedAt(),
+                            user.getUpdatedAt(),
+                            user.getProfileId(),
                             userStatus.isOnline()
                     );
                 })
@@ -116,11 +115,11 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public UserResponse update(UserUpdateRequest dto) {
+    public UserResponse update(UUID userId , UserUpdateRequest dto, Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
         if (dto.newUsername() != null) {
             boolean existsUsername = userRepository.findAll().stream()
                     .anyMatch(user ->
-                            !user.getId().equals(dto.userId())
+                            !user.getId().equals(userId)
                                     && user.getUsername().equals(dto.newUsername())
                     );
             if (existsUsername) {
@@ -131,7 +130,7 @@ public class BasicUserService implements UserService {
         if (dto.newEmail() != null) {
             boolean existsEmail = userRepository.findAll().stream()
                     .anyMatch(user ->
-                            !user.getId().equals(dto.userId())
+                            !user.getId().equals(userId)
                                     && user.getEmail().equals(dto.newEmail())
                     );
             if (existsEmail) {
@@ -139,36 +138,29 @@ public class BasicUserService implements UserService {
             }
         }
 
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new NoSuchElementException("User with id " + dto.userId() + " not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
 
-        if (dto.newProfile() != null) {
-            if (user.getProfileId() != null) {
-                binaryContentRepository.deleteById(user.getProfileId());
-            }
+        UUID nullableProfileId = optionalProfileCreateRequest
+                .map(profileRequest -> {
+                    Optional.ofNullable(user.getProfileId())
+                            .ifPresent(binaryContentRepository::deleteById);
 
-            BinaryContent binaryContent = new BinaryContent(
-                    dto.newProfile().data(),
-                    dto.newProfile().filename(),
-                    dto.newProfile().mimeType()
-            );
 
-            binaryContentRepository.save(binaryContent);
+                    BinaryContent binaryContent = new BinaryContent(
+                            profileRequest.data(),
+                            profileRequest.filename(),
+                            profileRequest.mimeType());
+                    return binaryContentRepository.save(binaryContent).getId();
+                })
+                .orElse(null);
 
-            user.update(
-                    dto.newUsername(),
-                    dto.newEmail(),
-                    dto.newPassword(),
-                    binaryContent.getId()
-            );
-        } else {
-            user.update(
-                    dto.newUsername(),
-                    dto.newEmail(),
-                    dto.newPassword(),
-                    user.getProfileId()
-            );
-        }
+        user.update(
+                dto.newUsername(),
+                dto.newEmail(),
+                dto.newPassword(),
+                nullableProfileId != null ? nullableProfileId : user.getProfileId()
+        );
 
         userRepository.save(user);
 
@@ -180,6 +172,8 @@ public class BasicUserService implements UserService {
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getProfileId(),
                 userStatus.isOnline()
         );
     }

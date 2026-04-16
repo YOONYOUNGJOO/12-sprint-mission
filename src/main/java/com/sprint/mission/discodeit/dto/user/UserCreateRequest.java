@@ -5,7 +5,6 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 public record UserCreateRequest(
         String username,
         String email,
-        String password,
-        BinaryContentCreateRequest profile
+        String password
 ) {
 }

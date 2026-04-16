@@ -20,15 +20,12 @@ public class UserStatus implements Serializable {
 
 
 
-    public UserStatus(UUID userId) {
+    public UserStatus(UUID userId, Instant lastActiveAt) {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
-
-        this.lastActiveAt = Instant.now();
-
+        this.lastActiveAt = lastActiveAt;
         this.userId = userId;
-
     }
 
     public void update(Instant lastActiveAt){

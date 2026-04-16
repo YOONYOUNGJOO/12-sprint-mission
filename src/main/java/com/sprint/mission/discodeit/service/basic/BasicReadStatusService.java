@@ -40,14 +40,14 @@ public class BasicReadStatusService implements ReadStatusService {
                     + " and channel id " + dto.channelId());
         }
 
-        ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId());
+        ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId(), dto.lastReadAt());
         readStatusRepository.save(readStatus);
 
         return new ReadStatusResponse(
                 readStatus.getId(),
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
-                readStatus.getReadAt(),
+                readStatus.getLastReadAt(),
                 readStatus.getCreatedAt()
         );
     }
@@ -60,7 +60,7 @@ public class BasicReadStatusService implements ReadStatusService {
         return new ReadStatusResponse(readStatus.getId(),
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
-                readStatus.getReadAt(),
+                readStatus.getLastReadAt(),
                 readStatus.getCreatedAt()
         );
     }
@@ -72,16 +72,16 @@ public class BasicReadStatusService implements ReadStatusService {
                         readStatus.getId(),
                         readStatus.getUserId(),
                         readStatus.getChannelId(),
-                        readStatus.getReadAt(),
+                        readStatus.getLastReadAt(),
                         readStatus.getCreatedAt()
                 ))
                 .toList();
     }
 
     @Override
-    public ReadStatusResponse update(ReadStatusUpdateRequest dto) {
-        ReadStatus readStatus = readStatusRepository.findById(dto.id())
-                .orElseThrow(() -> new NoSuchElementException("ReadStatus with id " + dto.id() + " not found"));
+    public ReadStatusResponse update(UUID readStatusId, ReadStatusUpdateRequest dto) {
+        ReadStatus readStatus = readStatusRepository.findById(readStatusId)
+                .orElseThrow(() -> new NoSuchElementException("ReadStatus with id " + readStatusId + " not found"));
 
         readStatus.update(dto.newReadAt());
         readStatusRepository.save(readStatus);
@@ -90,7 +90,7 @@ public class BasicReadStatusService implements ReadStatusService {
                 readStatus.getId(),
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
-                readStatus.getReadAt(),
+                readStatus.getLastReadAt(),
                 readStatus.getCreatedAt()
         );
     }
