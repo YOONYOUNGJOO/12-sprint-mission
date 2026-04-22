@@ -25,9 +25,10 @@ public class BasicBinaryContentService implements BinaryContentService {
         return new BinaryContentResponse(
                 binaryContent.getId(),
                 binaryContent.getCreatedAt(),
+                binaryContent.getFilename(),
+                binaryContent.getData().length,
                 binaryContent.getMimeType(),
-                binaryContent.getData(),
-                binaryContent.getFilename()
+                binaryContent.getData()
         );
     }
 
@@ -39,9 +40,10 @@ public class BasicBinaryContentService implements BinaryContentService {
         return new BinaryContentResponse(
                 binaryContent.getId(),
                 binaryContent.getCreatedAt(),
+                binaryContent.getFilename(),
+                binaryContent.getData().length,
                 binaryContent.getMimeType(),
-                binaryContent.getData(),
-                binaryContent.getFilename()
+                binaryContent.getData()
         );
     }
 
@@ -57,9 +59,10 @@ public class BasicBinaryContentService implements BinaryContentService {
                 .map(binaryContent -> new BinaryContentResponse(
                         binaryContent.getId(),
                         binaryContent.getCreatedAt(),
+                        binaryContent.getFilename(),
+                        binaryContent.getData().length,
                         binaryContent.getMimeType(),
-                        binaryContent.getData(),
-                        binaryContent.getFilename()
+                        binaryContent.getData()
                 ))
                 .toList();
     }

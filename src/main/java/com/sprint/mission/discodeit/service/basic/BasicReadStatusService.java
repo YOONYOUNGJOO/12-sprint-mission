@@ -48,7 +48,8 @@ public class BasicReadStatusService implements ReadStatusService {
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
                 readStatus.getLastReadAt(),
-                readStatus.getCreatedAt()
+                readStatus.getCreatedAt(),
+                readStatus.getUpdatedAt()
         );
     }
 
@@ -57,11 +58,13 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("ReadStatus with id " + id + " not found"));
 
-        return new ReadStatusResponse(readStatus.getId(),
+        return new ReadStatusResponse(
+                readStatus.getId(),
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
                 readStatus.getLastReadAt(),
-                readStatus.getCreatedAt()
+                readStatus.getCreatedAt(),
+                readStatus.getUpdatedAt()
         );
     }
 
@@ -73,7 +76,8 @@ public class BasicReadStatusService implements ReadStatusService {
                         readStatus.getUserId(),
                         readStatus.getChannelId(),
                         readStatus.getLastReadAt(),
-                        readStatus.getCreatedAt()
+                        readStatus.getCreatedAt(),
+                        readStatus.getUpdatedAt()
                 ))
                 .toList();
     }
@@ -83,7 +87,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepository.findById(readStatusId)
                 .orElseThrow(() -> new NoSuchElementException("ReadStatus with id " + readStatusId + " not found"));
 
-        readStatus.update(dto.newReadAt());
+        readStatus.update(dto.newLastReadAt());
         readStatusRepository.save(readStatus);
 
         return new ReadStatusResponse(
@@ -91,7 +95,8 @@ public class BasicReadStatusService implements ReadStatusService {
                 readStatus.getUserId(),
                 readStatus.getChannelId(),
                 readStatus.getLastReadAt(),
-                readStatus.getCreatedAt()
+                readStatus.getCreatedAt(),
+                readStatus.getUpdatedAt()
         );
     }
 

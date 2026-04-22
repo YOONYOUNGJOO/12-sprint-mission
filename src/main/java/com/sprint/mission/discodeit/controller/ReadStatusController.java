@@ -19,18 +19,18 @@ public class ReadStatusController {
 
     private final ReadStatusService readStatusService;
 
-    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    @PostMapping
     public ResponseEntity<ReadStatusResponse> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
         ReadStatusResponse readStatusResponse = readStatusService.create(readStatusCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(readStatusResponse);
     }
 
-    @RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
+    @PatchMapping("/{readStatusId}")
     public ResponseEntity<ReadStatusResponse> update(
-            @PathVariable UUID id,
+            @PathVariable UUID readStatusId,
             @RequestBody ReadStatusUpdateRequest readStatusUpdateRequest
     ) {
-        ReadStatusResponse readStatusResponse = readStatusService.update(id, readStatusUpdateRequest);
+        ReadStatusResponse readStatusResponse = readStatusService.update(readStatusId, readStatusUpdateRequest);
         return ResponseEntity.ok(readStatusResponse);
     }
 
