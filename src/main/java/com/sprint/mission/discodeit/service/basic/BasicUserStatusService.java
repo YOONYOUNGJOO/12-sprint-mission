@@ -36,8 +36,10 @@ public class BasicUserStatusService implements UserStatusService {
         return new UserStatusResponse(
                 userStatus.getId(),
                 userStatus.getUserId(),
+                userStatus.isOnline(),
                 userStatus.getLastActiveAt(),
-                userStatus.getCreatedAt()
+                userStatus.getCreatedAt(),
+                userStatus.getUpdatedAt()
         );
     }
 
@@ -49,8 +51,10 @@ public class BasicUserStatusService implements UserStatusService {
         return new UserStatusResponse(
                 userStatus.getId(),
                 userStatus.getUserId(),
+                userStatus.isOnline(),
                 userStatus.getLastActiveAt(),
-                userStatus.getCreatedAt()
+                userStatus.getCreatedAt(),
+                userStatus.getUpdatedAt()
         );
     }
 
@@ -60,8 +64,10 @@ public class BasicUserStatusService implements UserStatusService {
                 .map(status -> new UserStatusResponse(
                         status.getId(),
                         status.getUserId(),
+                        status.isOnline(),
                         status.getLastActiveAt(),
-                        status.getCreatedAt()
+                        status.getCreatedAt(),
+                        status.getUpdatedAt()
                 ))
                 .toList();
     }
@@ -77,8 +83,10 @@ public class BasicUserStatusService implements UserStatusService {
         return new UserStatusResponse(
                 userStatus.getId(),
                 userStatus.getUserId(),
+                userStatus.isOnline(),
                 userStatus.getLastActiveAt(),
-                userStatus.getCreatedAt()
+                userStatus.getCreatedAt(),
+                userStatus.getUpdatedAt()
         );
     }
 
@@ -96,8 +104,10 @@ public class BasicUserStatusService implements UserStatusService {
         return new UserStatusResponse(
                 userStatus.getId(),
                 userStatus.getUserId(),
+                userStatus.isOnline(),
                 userStatus.getLastActiveAt(),
-                userStatus.getCreatedAt()
+                userStatus.getCreatedAt(),
+                userStatus.getUpdatedAt()
         );
     }
 

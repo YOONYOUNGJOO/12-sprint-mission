@@ -51,7 +51,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = new Channel(channelType, null, null);
         channelRepository.save(channel);
 
-        for (UUID userId : dto.userIds()) {
+        for (UUID userId : dto.participantIds()) {
             ReadStatus readStatus = new ReadStatus(userId, channel.getId(), Instant.MIN);
             readStatusRepository.save(readStatus);
         }
@@ -63,7 +63,7 @@ public class BasicChannelService implements ChannelService {
                 channel.getDescription(),
                 channel.getCreatedAt(),
                 null,
-                dto.userIds()
+                dto.participantIds()
         );
     }
 

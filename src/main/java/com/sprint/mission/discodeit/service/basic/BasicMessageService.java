@@ -59,6 +59,7 @@ public class BasicMessageService implements MessageService {
         return new MessageResponse(
                 message.getId(),
                 message.getCreatedAt(),
+                message.getUpdatedAt(),
                 message.getContent(),
                 message.getChannelId(),
                 message.getAuthorId(),
@@ -81,6 +82,7 @@ public class BasicMessageService implements MessageService {
             MessageResponse messageResponse = new MessageResponse(
                     message.getId(),
                     message.getCreatedAt(),
+                    message.getUpdatedAt(),
                     message.getContent(),
                     message.getChannelId(),
                     message.getAuthorId(),
@@ -102,6 +104,7 @@ public class BasicMessageService implements MessageService {
         return new MessageResponse(
                 message.getId(),
                 message.getCreatedAt(),
+                message.getUpdatedAt(),
                 message.getContent(),
                 message.getChannelId(),
                 message.getAuthorId(),
