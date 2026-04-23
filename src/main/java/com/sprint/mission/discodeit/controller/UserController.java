@@ -61,7 +61,20 @@ public class UserController {
             @RequestPart("userUpdateRequest") UserUpdateRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        UserResponse userResponse = userService.update(userId, userUpdateRequest, profile);
+        Optional<BinaryContentCreateRequest> binaryContent = Optional.empty();
+        if (profile != null && !profile.isEmpty()) {
+            try {
+                binaryContent = Optional.of(new BinaryContentCreateRequest(
+                        profile.getBytes(),
+                        profile.getOriginalFilename(),
+                        profile.getContentType()
+                ));
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read profile file", e);
+            }
+        }
+
+        UserResponse userResponse = userService.update(userId, userUpdateRequest, binaryContent);
         return ResponseEntity.ok(userResponse);
     }
 

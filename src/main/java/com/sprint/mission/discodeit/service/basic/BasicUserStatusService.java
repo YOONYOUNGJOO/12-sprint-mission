@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.domain.user.User;
 import com.sprint.mission.discodeit.domain.user.UserStatus;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
@@ -45,8 +44,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse findById(UUID id) {
-        UserStatus userStatus = userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus with id " + id + " not found"));
+        UserStatus userStatus = getUserStatusOrThrow(id);
 
         return new UserStatusResponse(
                 userStatus.getId(),
@@ -74,8 +72,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse update(UUID id, UserStatusUpdateRequest dto) {
-        UserStatus userStatus = userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus with id " + id + " not found"));
+        UserStatus userStatus = getUserStatusOrThrow(id);
 
         userStatus.update(dto.newLastActiveAt());
         userStatusRepository.save(userStatus);
@@ -92,11 +89,11 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse updateByUserId(UUID userId, UserStatusUpdateRequest dto) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
 
-        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + user.getId()));
+        UserStatus userStatus = userStatusRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
 
         userStatus.update(dto.newLastActiveAt());
         userStatusRepository.save(userStatus);
@@ -113,7 +110,12 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void delete(UUID id) {
-        findById(id);
+        getUserStatusOrThrow(id);
         userStatusRepository.deleteById(id);
+    }
+
+    private UserStatus getUserStatusOrThrow(UUID id) {
+        return userStatusRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("UserStatus with id " + id + " not found"));
     }
 }

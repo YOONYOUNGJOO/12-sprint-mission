@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,16 +21,11 @@ public class BasicAuthService implements AuthService {
 
     @Override
     public UserResponse login(LoginRequest dto) {
-        Optional<User> user = userRepository.findAll().stream()
+        User foundUser = userRepository.findAll().stream()
                 .filter(u -> u.getUsername().equals(dto.username())
                         && u.getPassword().equals(dto.password()))
-                .findFirst();
-
-        if (user.isEmpty()) {
-            throw new NoSuchElementException("Invalid username or password");
-        }
-
-        User foundUser = user.get();
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Invalid username or password"));
 
         UserStatus userStatus = userStatusRepository.findByUserId(foundUser.getId())
                 .orElseThrow(() -> new NoSuchElementException("User status not found"));
