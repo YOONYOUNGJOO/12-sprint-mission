@@ -27,6 +27,15 @@ public class Channel extends BaseUpdatableEntity {
         this.description = description;
     }
 
+    public void update(String name, String description) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+    }
+
     public static Channel createPublic(String name, String description) {
         return new Channel(ChannelType.PUBLIC, name, description);
     }

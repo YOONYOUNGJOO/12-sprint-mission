@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.domain.user.User;
-import com.sprint.mission.discodeit.domain.user.UserStatus;
+import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.entity.user.UserStatus;
 import com.sprint.mission.discodeit.dto.Auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
@@ -17,27 +18,20 @@ import java.util.NoSuchElementException;
 public class BasicAuthService implements AuthService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
     private final UserStatusRepository userStatusRepository;
 
     @Override
-    public UserResponse login(LoginRequest dto) {
+    public UserResponse login(LoginRequest request) {
         User foundUser = userRepository.findAll().stream()
-                .filter(u -> u.getUsername().equals(dto.username())
-                        && u.getPassword().equals(dto.password()))
+                .filter(u -> u.getUsername().equals(request.username())
+                        && u.getPassword().equals(request.password()))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Invalid username or password"));
 
-        UserStatus userStatus = userStatusRepository.findByUserId(foundUser.getId())
+        UserStatus userStatus = userStatusRepository.findByUser_Id(foundUser.getId())
                 .orElseThrow(() -> new NoSuchElementException("User status not found"));
 
-        return new UserResponse(
-                foundUser.getId(),
-                foundUser.getUsername(),
-                foundUser.getEmail(),
-                foundUser.getCreatedAt(),
-                foundUser.getUpdatedAt(),
-                foundUser.getProfileId(),
-                userStatus.isOnline()
-        );
+        return userMapper.toResponse(foundUser, userStatus);
     }
 }

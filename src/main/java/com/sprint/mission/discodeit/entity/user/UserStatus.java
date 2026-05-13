@@ -25,6 +25,12 @@ public class UserStatus extends BaseUpdatableEntity {
     @Column(name = "last_active_at", nullable = false)
     private Instant lastActiveAt;
 
+    public void updateLastActiveAt(Instant lastActiveAt) {
+        if (lastActiveAt != null) {
+            this.lastActiveAt = lastActiveAt;
+        }
+    }
+
     public boolean isOnline() {
         return lastActiveAt.isAfter(Instant.now().minus(ONLINE_THRESHOLD));
     }

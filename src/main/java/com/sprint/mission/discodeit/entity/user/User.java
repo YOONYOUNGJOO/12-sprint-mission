@@ -24,13 +24,34 @@ public class User extends BaseUpdatableEntity {
     @Column(nullable = false, length = 60)
     private String password;
 
-    @ToString.Exclude
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id")
     private BinaryContent profile;
 
     @ToString.Exclude
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private UserStatus status;
+
+    public void update(String username, String email, String password, BinaryContent profile) {
+        if(username != null) {
+            this.username = username;
+        }
+
+        if(email != null) {
+            this.email = email;
+        }
+
+        if(password != null) {
+            this.password = password;
+        }
+
+        if(profile != null) {
+            this.profile = profile;
+        }
+    }
+
+    public void clearProfile() {
+        this.profile = null;
+    }
 
 }

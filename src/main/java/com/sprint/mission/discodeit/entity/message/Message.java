@@ -42,4 +42,14 @@ public class Message extends BaseUpdatableEntity {
     private List<BinaryContent> attachments;
 
 
+    public void updateContent(String content) {
+        if (content != null) {
+            this.content = content;
+        }
+    }
+
+    public void clearAttachments() {
+        this.attachments.clear();
+    }
+
 }
