@@ -1,48 +1,53 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.entity.user.User;
-import com.sprint.mission.discodeit.entity.user.UserStatus;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.entity.user.UserStatus;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final UserStatusRepository userStatusRepository;
+    private final UserMapper userMapper;
     private final UserStatusMapper userStatusMapper;
     private final BinaryContentService binaryContentService;
 
     @Override
     @Transactional
-    public UserResponse create(UserCreateRequest request,
-                               Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+    public UserResponse create(
+            UserCreateRequest request,
+            Optional<BinaryContentCreateRequest> optionalProfileCreateRequest
+    ) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("Username already exists: " + request.username());
+            throw new IllegalArgumentException(
+                    "User with username " + request.username() + " already exists"
+            );
         }
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists: " + request.email());
+            throw new IllegalArgumentException(
+                    "User with email " + request.email() + " already exists"
+            );
         }
 
         BinaryContent profile = optionalProfileCreateRequest
@@ -50,22 +55,19 @@ public class BasicUserService implements UserService {
                 .orElse(null);
 
         User user = userMapper.toEntity(request, profile);
-        User userSaved = userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        UserStatus userStatus = userStatusMapper.toEntity(userSaved, Instant.now());
-        UserStatus userStatusSaved = userStatusRepository.save(userStatus);
+        UserStatus userStatus = userStatusMapper.toEntity(savedUser, Instant.now());
+        UserStatus savedUserStatus = userStatusRepository.save(userStatus);
 
-        return userMapper.toResponse(userSaved, userStatusSaved);
+        return userMapper.toResponse(savedUser, savedUserStatus);
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserResponse findById(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
-
-        UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
+        User user = getUserOrThrow(userId);
+        UserStatus userStatus = getUserStatusOrThrow(userId);
 
         return userMapper.toResponse(user, userStatus);
     }
@@ -75,11 +77,7 @@ public class BasicUserService implements UserService {
     public List<UserResponse> findAll() {
         return userRepository.findAll().stream()
                 .map(user -> {
-                    UserStatus userStatus = userStatusRepository.findByUser_Id(user.getId())
-                            .orElseThrow(() -> new NoSuchElementException(
-                                    "No user status found for user id " + user.getId()
-                            ));
-
+                    UserStatus userStatus = getUserStatusOrThrow(user.getId());
                     return userMapper.toResponse(user, userStatus);
                 })
                 .toList();
@@ -92,22 +90,26 @@ public class BasicUserService implements UserService {
             UserUpdateRequest request,
             Optional<BinaryContentCreateRequest> optionalProfileCreateRequest
     ) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+        User user = getUserOrThrow(userId);
 
         if (request.newUsername() != null
                 && !request.newUsername().equals(user.getUsername())
                 && userRepository.existsByUsername(request.newUsername())) {
-            throw new IllegalArgumentException("Username already exists: " + request.newUsername());
+            throw new IllegalArgumentException(
+                    "User with username " + request.newUsername() + " already exists"
+            );
         }
 
         if (request.newEmail() != null
                 && !request.newEmail().equals(user.getEmail())
                 && userRepository.existsByEmail(request.newEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + request.newEmail());
+            throw new IllegalArgumentException(
+                    "User with email " + request.newEmail() + " already exists"
+            );
         }
 
         BinaryContent oldProfile = user.getProfile();
+
         BinaryContent newProfile = optionalProfileCreateRequest
                 .map(binaryContentService::createBinaryContent)
                 .orElse(null);
@@ -127,8 +129,7 @@ public class BasicUserService implements UserService {
             binaryContentService.delete(oldProfile.getId());
         }
 
-        UserStatus userStatus = userStatusRepository.findByUser_Id(user.getId())
-                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + user.getId()));
+        UserStatus userStatus = getUserStatusOrThrow(user.getId());
 
         return userMapper.toResponse(user, userStatus);
     }
@@ -136,12 +137,8 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     public void delete(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
-
-        UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
-
+        User user = getUserOrThrow(userId);
+        UserStatus userStatus = getUserStatusOrThrow(userId);
         BinaryContent profile = user.getProfile();
 
         if (profile != null) {
@@ -154,5 +151,19 @@ public class BasicUserService implements UserService {
         if (profile != null) {
             binaryContentService.delete(profile.getId());
         }
+    }
+
+    private User getUserOrThrow(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User with id " + userId + " not found"
+                ));
+    }
+
+    private UserStatus getUserStatusOrThrow(UUID userId) {
+        return userStatusRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "UserStatus with userId " + userId + " not found"
+                ));
     }
 }

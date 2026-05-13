@@ -8,7 +8,7 @@ import com.sprint.mission.discodeit.entity.user.UserStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = BinaryContentMapper.class)
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -21,9 +21,7 @@ public interface UserMapper {
     @Mapping(target = "id", source = "user.id")
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")
-    @Mapping(target = "createdAt", source = "user.createdAt")
-    @Mapping(target = "updatedAt", source = "user.updatedAt")
-    @Mapping(target = "profileId", source = "user.profile.id")
-    @Mapping(target = "online", expression = "java(userStatus.isOnline())")
+    @Mapping(target = "profile", source = "user.profile")
+    @Mapping(target = "online", expression = "java(userStatus != null && userStatus.isOnline())")
     UserResponse toResponse(User user, UserStatus userStatus);
 }

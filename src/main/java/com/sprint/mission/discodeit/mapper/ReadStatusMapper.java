@@ -18,7 +18,11 @@ public interface ReadStatusMapper {
     @Mapping(target = "user", source = "user")
     @Mapping(target = "channel", source = "channel")
     @Mapping(target = "lastReadAt", source = "request.lastReadAt")
-    ReadStatus toEntity(ReadStatusCreateRequest request, User user, Channel channel);
+    ReadStatus toEntity(
+            ReadStatusCreateRequest request,
+            User user,
+            Channel channel
+    );
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -26,10 +30,15 @@ public interface ReadStatusMapper {
     @Mapping(target = "user", source = "user")
     @Mapping(target = "channel", source = "channel")
     @Mapping(target = "lastReadAt", source = "lastReadAt")
-    ReadStatus toEntity(User user, Channel channel, Instant lastReadAt);
+    ReadStatus toEntity(
+            User user,
+            Channel channel,
+            Instant lastReadAt
+    );
 
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "channelId", source = "channel.id")
-    @Mapping(target = "updateAt", source = "updatedAt")
+    @Mapping(target = "lastReadAt", source = "lastReadAt")
     ReadStatusResponse toResponse(ReadStatus readStatus);
 }

@@ -49,6 +49,12 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponse> findById(@PathVariable UUID userId) {
+        UserResponse userResponse = userService.findById(userId);
+        return ResponseEntity.ok(userResponse);
+    }
+
     @GetMapping
     public ResponseEntity<List<UserResponse>> findAll() {
         List<UserResponse> userResponseList = userService.findAll();

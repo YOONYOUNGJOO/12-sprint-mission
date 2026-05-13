@@ -28,10 +28,14 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public UserStatusResponse create(UserStatusCreateRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException("User not found with id " + request.userId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User not found with id " + request.userId()
+                ));
 
         if (userStatusRepository.findByUser_Id(request.userId()).isPresent()) {
-            throw new IllegalStateException("User status already exists for user id " + request.userId());
+            throw new IllegalStateException(
+                    "User status already exists for user id " + request.userId()
+            );
         }
 
         UserStatus userStatus = userStatusMapper.toEntity(user, request.lastActiveAt());
@@ -44,7 +48,6 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional(readOnly = true)
     public UserStatusResponse findById(UUID id) {
         UserStatus userStatus = getUserStatusOrThrow(id);
-
         return userStatusMapper.toResponse(userStatus);
     }
 
@@ -70,7 +73,9 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public UserStatusResponse updateByUserId(UUID userId, UserStatusUpdateRequest request) {
         UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NoSuchElementException("No user status found for user id " + userId));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No user status found for user id " + userId
+                ));
 
         userStatus.updateLastActiveAt(request.newLastActiveAt());
 
@@ -81,12 +86,13 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public void delete(UUID id) {
         UserStatus userStatus = getUserStatusOrThrow(id);
-
         userStatusRepository.delete(userStatus);
     }
 
     private UserStatus getUserStatusOrThrow(UUID id) {
         return userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus with id " + id + " not found"));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "UserStatus with id " + id + " not found"
+                ));
     }
 }

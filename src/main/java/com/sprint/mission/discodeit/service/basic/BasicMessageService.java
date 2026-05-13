@@ -1,9 +1,12 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.message.Message;
@@ -14,10 +17,14 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.service.UserService;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +37,7 @@ public class BasicMessageService implements MessageService {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final BinaryContentService binaryContentService;
+    private final UserService userService;
 
     @Override
     @Transactional
@@ -38,10 +46,14 @@ public class BasicMessageService implements MessageService {
             List<BinaryContentCreateRequest> binaryContentCreateRequests
     ) {
         Channel channel = channelRepository.findById(request.channelId())
-                .orElseThrow(() -> new NoSuchElementException("Channel not found with id " + request.channelId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Channel not found with id " + request.channelId()
+                ));
 
         User author = userRepository.findById(request.authorId())
-                .orElseThrow(() -> new NoSuchElementException("Author not found with id " + request.authorId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Author not found with id " + request.authorId()
+                ));
 
         List<BinaryContent> attachments = binaryContentCreateRequests.stream()
                 .map(binaryContentService::createBinaryContent)
@@ -50,7 +62,7 @@ public class BasicMessageService implements MessageService {
         Message message = messageMapper.toEntity(request, channel, author, attachments);
         Message saved = messageRepository.save(message);
 
-        return messageMapper.toResponse(saved, getAttachmentIds(saved));
+        return toResponse(saved);
     }
 
     @Override
@@ -61,10 +73,46 @@ public class BasicMessageService implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageResponse> findAllByChannelId(UUID channelId) {
-        return messageRepository.findAllByChannel_Id(channelId).stream()
-                .map(message -> messageMapper.toResponse(message, getAttachmentIds(message)))
+    public PageResponse<MessageResponse> findAllByChannelId(
+            UUID channelId,
+            Instant cursor,
+            Pageable pageable
+    ) {
+        int size = pageable.getPageSize();
+        Pageable requestPageable = PageRequest.of(0, size + 1);
+
+        List<Message> messages = cursor == null
+                ? messageRepository.findAllByChannel_IdOrderByCreatedAtDesc(
+                channelId,
+                requestPageable
+        )
+                : messageRepository.findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
+                channelId,
+                cursor,
+                requestPageable
+        );
+
+        boolean hasNext = messages.size() > size;
+
+        List<Message> pageMessages = hasNext
+                ? messages.subList(0, size)
+                : messages;
+
+        List<MessageResponse> content = pageMessages.stream()
+                .map(this::toResponse)
                 .toList();
+
+        Instant nextCursor = hasNext && !pageMessages.isEmpty()
+                ? pageMessages.get(pageMessages.size() - 1).getCreatedAt()
+                : null;
+
+        return new PageResponse<>(
+                content,
+                nextCursor,
+                size,
+                hasNext,
+                null
+        );
     }
 
     @Override
@@ -74,7 +122,7 @@ public class BasicMessageService implements MessageService {
 
         message.updateContent(request.newContent());
 
-        return messageMapper.toResponse(message, getAttachmentIds(message));
+        return toResponse(message);
     }
 
     @Override
@@ -91,9 +139,25 @@ public class BasicMessageService implements MessageService {
         }
     }
 
+    private MessageResponse toResponse(Message message) {
+        UserResponse author = null;
+
+        if (message.getAuthor() != null) {
+            author = userService.findById(message.getAuthor().getId());
+        }
+
+        List<BinaryContentResponse> attachments = getAttachmentIds(message).stream()
+                .map(binaryContentService::findById)
+                .toList();
+
+        return messageMapper.toResponse(message, author, attachments);
+    }
+
     private Message getMessageOrThrow(UUID messageId) {
         return messageRepository.findById(messageId)
-                .orElseThrow(() -> new NoSuchElementException("Message with id " + messageId + " not found"));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Message with id " + messageId + " not found"
+                ));
     }
 
     private List<UUID> getAttachmentIds(Message message) {
