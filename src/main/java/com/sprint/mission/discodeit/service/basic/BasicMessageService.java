@@ -1,12 +1,10 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
-import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.message.Message;
@@ -17,7 +15,6 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -37,7 +34,6 @@ public class BasicMessageService implements MessageService {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final BinaryContentService binaryContentService;
-    private final UserService userService;
 
     @Override
     @Transactional
@@ -62,7 +58,7 @@ public class BasicMessageService implements MessageService {
         Message message = messageMapper.toEntity(request, channel, author, attachments);
         Message saved = messageRepository.save(message);
 
-        return toResponse(saved);
+        return messageMapper.toResponse(saved);
     }
 
     @Override
@@ -99,7 +95,7 @@ public class BasicMessageService implements MessageService {
                 : messages;
 
         List<MessageResponse> content = pageMessages.stream()
-                .map(this::toResponse)
+                .map(messageMapper::toResponse)
                 .toList();
 
         Instant nextCursor = hasNext && !pageMessages.isEmpty()
@@ -122,7 +118,7 @@ public class BasicMessageService implements MessageService {
 
         message.updateContent(request.newContent());
 
-        return toResponse(message);
+        return messageMapper.toResponse(message);
     }
 
     @Override
@@ -137,20 +133,6 @@ public class BasicMessageService implements MessageService {
         for (UUID attachmentId : attachmentIds) {
             binaryContentService.delete(attachmentId);
         }
-    }
-
-    private MessageResponse toResponse(Message message) {
-        UserResponse author = null;
-
-        if (message.getAuthor() != null) {
-            author = userService.findById(message.getAuthor().getId());
-        }
-
-        List<BinaryContentResponse> attachments = getAttachmentIds(message).stream()
-                .map(binaryContentService::findById)
-                .toList();
-
-        return messageMapper.toResponse(message, author, attachments);
     }
 
     private Message getMessageOrThrow(UUID messageId) {

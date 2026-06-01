@@ -24,4 +24,11 @@ public interface UserMapper {
     @Mapping(target = "profile", source = "user.profile")
     @Mapping(target = "online", expression = "java(userStatus != null && userStatus.isOnline())")
     UserResponse toResponse(User user, UserStatus userStatus);
+
+    default UserResponse toResponse(User user) {
+        if(user == null) {
+            return null;
+        }
+        return toResponse(user, user.getStatus());
+    }
 }

@@ -67,19 +67,15 @@ public class BasicUserService implements UserService {
     @Transactional(readOnly = true)
     public UserResponse findById(UUID userId) {
         User user = getUserOrThrow(userId);
-        UserStatus userStatus = getUserStatusOrThrow(userId);
 
-        return userMapper.toResponse(user, userStatus);
+        return userMapper.toResponse(user);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
         return userRepository.findAll().stream()
-                .map(user -> {
-                    UserStatus userStatus = getUserStatusOrThrow(user.getId());
-                    return userMapper.toResponse(user, userStatus);
-                })
+                .map(userMapper::toResponse)
                 .toList();
     }
 
@@ -129,9 +125,7 @@ public class BasicUserService implements UserService {
             binaryContentService.delete(oldProfile.getId());
         }
 
-        UserStatus userStatus = getUserStatusOrThrow(user.getId());
-
-        return userMapper.toResponse(user, userStatus);
+        return userMapper.toResponse(user);
     }
 
     @Override

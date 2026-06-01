@@ -12,6 +12,5 @@ public interface BinaryContentService {
     BinaryContent createBinaryContent(BinaryContentCreateRequest request);
     BinaryContentResponse findById(UUID id);
     List<BinaryContentResponse> findAllByIdIn(List<UUID> ids);
-    ResponseEntity<?> download(UUID id);
     void delete(UUID id);
 }

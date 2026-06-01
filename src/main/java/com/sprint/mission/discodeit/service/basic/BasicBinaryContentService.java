@@ -46,23 +46,9 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     @Transactional(readOnly = true)
     public List<BinaryContentResponse> findAllByIdIn(List<UUID> ids) {
-        List<BinaryContent> binaryContents = binaryContentRepository.findAllById(ids);
-
-        if (binaryContents.isEmpty()) {
-            throw new NoSuchElementException("No binary content found for given ids");
-        }
-
-        return binaryContents.stream()
+        return binaryContentRepository.findAllById(ids).stream()
                 .map(binaryContentMapper::toResponse)
                 .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> download(UUID id) {
-        BinaryContent binaryContent = getBinaryContentOrThrow(id);
-        BinaryContentResponse response = binaryContentMapper.toResponse(binaryContent);
-        return binaryContentStorage.download(response);
     }
 
     @Override

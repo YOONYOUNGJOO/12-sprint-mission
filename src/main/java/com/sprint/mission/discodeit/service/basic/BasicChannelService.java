@@ -12,13 +12,13 @@ import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class BasicChannelService implements ChannelService {
     private final ReadStatusMapper readStatusMapper;
     private final MessageRepository messageRepository;
     private final MessageService messageService;
-    private final UserService userService;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -61,12 +61,14 @@ public class BasicChannelService implements ChannelService {
 
         for (UUID userId : request.participantIds()) {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new NoSuchElementException("User not found with id " + userId));
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "User not found with id " + userId
+                    ));
 
             ReadStatus readStatus = readStatusMapper.toEntity(user, saved, now);
             readStatusRepository.save(readStatus);
 
-            participants.add(userService.findById(userId));
+            participants.add(userMapper.toResponse(user));
         }
 
         return channelMapper.toResponse(saved, null, participants);
@@ -76,33 +78,30 @@ public class BasicChannelService implements ChannelService {
     @Transactional(readOnly = true)
     public ChannelResponse findById(UUID channelId) {
         Channel channel = getChannelOrThrow(channelId);
-        Instant latestMessageAt = getLatestMessageAt(channel.getId());
-        List<UserResponse> participants = findParticipants(channel);
 
-        return channelMapper.toResponse(channel, latestMessageAt, participants);
+        return toResponse(channel);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ChannelResponse> findAllByUserId(UUID userId) {
-        List<Channel> channels = channelRepository.findAll();
-        List<ChannelResponse> responses = new ArrayList<>();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User with id " + userId + " not found"
+                ));
 
-        for (Channel channel : channels) {
-            Instant latestMessageAt = getLatestMessageAt(channel.getId());
+        List<UUID> participatedChannelIds = readStatusRepository.findAllByUser_Id(userId).stream()
+                .map(readStatus -> readStatus.getChannel().getId())
+                .toList();
 
-            if (channel.getType() == ChannelType.PUBLIC) {
-                responses.add(channelMapper.toResponse(channel, latestMessageAt, List.of()));
-                continue;
-            }
+        List<Channel> channels = channelRepository.findAllByTypeOrIdIn(
+                ChannelType.PUBLIC,
+                participatedChannelIds
+        );
 
-            if (readStatusRepository.findByUser_IdAndChannel_Id(userId, channel.getId()).isPresent()) {
-                List<UserResponse> participants = findParticipants(channel);
-                responses.add(channelMapper.toResponse(channel, latestMessageAt, participants));
-            }
-        }
-
-        return responses;
+        return channels.stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Override
@@ -116,23 +115,27 @@ public class BasicChannelService implements ChannelService {
 
         channel.update(request.newName(), request.newDescription());
 
-        Instant latestMessageAt = getLatestMessageAt(channel.getId());
-        return channelMapper.toResponse(channel, latestMessageAt, List.of());
+        return toResponse(channel);
     }
 
     @Override
     @Transactional
     public void delete(UUID channelId) {
         Channel channel = getChannelOrThrow(channelId);
+
         List<Message> messages = messageRepository.findAllByChannel_Id(channelId);
         for (Message message : messages) {
             messageService.delete(message.getId());
         }
 
-        List<ReadStatus> readStatuses = readStatusRepository.findAllByChannel_Id(channelId);
-        readStatusRepository.deleteAll(readStatuses);
-
         channelRepository.delete(channel);
+    }
+
+    private ChannelResponse toResponse(Channel channel) {
+        Instant latestMessageAt = getLatestMessageAt(channel.getId());
+        List<UserResponse> participants = findParticipants(channel);
+
+        return channelMapper.toResponse(channel, latestMessageAt, participants);
     }
 
     private List<UserResponse> findParticipants(Channel channel) {
@@ -140,16 +143,15 @@ public class BasicChannelService implements ChannelService {
             return List.of();
         }
 
-        return readStatusRepository.findAllByChannel_Id(channel.getId()).stream()
-                .map(readStatus -> readStatus.getUser().getId())
-                .map(userService::findById)
+        return readStatusRepository.findAllByChannelIdWithUser(channel.getId()).stream()
+                .map(ReadStatus::getUser)
+                .map(userMapper::toResponse)
                 .toList();
     }
 
     private Instant getLatestMessageAt(UUID channelId) {
-        return messageRepository.findAllByChannel_Id(channelId).stream()
+        return messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(channelId)
                 .map(Message::getCreatedAt)
-                .max(Instant::compareTo)
                 .orElse(null);
     }
 

@@ -40,20 +40,16 @@ public class BasicReadStatusService implements ReadStatusService {
                         "Channel not found with id " + request.channelId()
                 ));
 
-        if (readStatusRepository.findByUser_IdAndChannel_Id(
-                request.userId(),
-                request.channelId()
-        ).isPresent()) {
-            throw new IllegalStateException(
-                    "Read status already exists for user id " + request.userId()
-                            + " and channel id " + request.channelId()
-            );
-        }
+        ReadStatus readStatus = readStatusRepository.findByUser_IdAndChannel_Id(
+                        user.getId(),
+                        channel.getId()
+                )
+                .orElseGet(() -> {
+                    ReadStatus newReadStatus = readStatusMapper.toEntity(request, user, channel);
+                    return readStatusRepository.save(newReadStatus);
+                });
 
-        ReadStatus readStatus = readStatusMapper.toEntity(request, user, channel);
-        ReadStatus saved = readStatusRepository.save(readStatus);
-
-        return readStatusMapper.toResponse(saved);
+        return readStatusMapper.toResponse(readStatus);
     }
 
     @Override

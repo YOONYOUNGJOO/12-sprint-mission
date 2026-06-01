@@ -7,7 +7,9 @@ import com.sprint.mission.discodeit.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,13 +36,13 @@ public class Message extends BaseUpdatableEntity {
 
 
     @ToString.Exclude
+    @BatchSize(size = 100)
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinTable(
             name = "message_attachments",
             joinColumns = @JoinColumn(name = "message_id"),
             inverseJoinColumns = @JoinColumn(name = "attachment_id"))
-    private List<BinaryContent> attachments;
-
+    private List<BinaryContent> attachments = new ArrayList<>();
 
     public void updateContent(String content) {
         if (content != null) {
