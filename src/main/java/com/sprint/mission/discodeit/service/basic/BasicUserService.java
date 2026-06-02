@@ -7,6 +7,9 @@ import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.user.User;
 import com.sprint.mission.discodeit.entity.user.UserStatus;
+import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -39,15 +42,11 @@ public class BasicUserService implements UserService {
             Optional<BinaryContentCreateRequest> optionalProfileCreateRequest
     ) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException(
-                    "User with username " + request.username() + " already exists"
-            );
+            throw new UserAlreadyExistsException("username", request.username());
         }
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException(
-                    "User with email " + request.email() + " already exists"
-            );
+            throw new UserAlreadyExistsException("email", request.email());
         }
 
         BinaryContent profile = optionalProfileCreateRequest
@@ -91,17 +90,13 @@ public class BasicUserService implements UserService {
         if (request.newUsername() != null
                 && !request.newUsername().equals(user.getUsername())
                 && userRepository.existsByUsername(request.newUsername())) {
-            throw new IllegalArgumentException(
-                    "User with username " + request.newUsername() + " already exists"
-            );
+            throw new UserAlreadyExistsException("username", request.newUsername());
         }
 
         if (request.newEmail() != null
                 && !request.newEmail().equals(user.getEmail())
                 && userRepository.existsByEmail(request.newEmail())) {
-            throw new IllegalArgumentException(
-                    "User with email " + request.newEmail() + " already exists"
-            );
+            throw new UserAlreadyExistsException("email", request.newEmail());
         }
 
         BinaryContent oldProfile = user.getProfile();
@@ -132,7 +127,7 @@ public class BasicUserService implements UserService {
     @Transactional
     public void delete(UUID userId) {
         User user = getUserOrThrow(userId);
-        UserStatus userStatus = getUserStatusOrThrow(userId);
+        UserStatus userStatus = getUserStatusByUserOrThrow(user);
         BinaryContent profile = user.getProfile();
 
         if (profile != null) {
@@ -149,15 +144,11 @@ public class BasicUserService implements UserService {
 
     private User getUserOrThrow(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "User with id " + userId + " not found"
-                ));
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    private UserStatus getUserStatusOrThrow(UUID userId) {
-        return userStatusRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "UserStatus with userId " + userId + " not found"
-                ));
+    private UserStatus getUserStatusByUserOrThrow(User user) {
+        return userStatusRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> UserStatusNotFoundException.byUserId(user.getId()));
     }
 }

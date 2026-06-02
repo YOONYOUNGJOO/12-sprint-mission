@@ -10,6 +10,9 @@ import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.channel.ChannelType;
 import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -22,7 +25,6 @@ import com.sprint.mission.discodeit.service.MessageService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,10 +62,7 @@ public class BasicChannelService implements ChannelService {
         List<UserResponse> participants = new ArrayList<>();
 
         for (UUID userId : request.participantIds()) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new NoSuchElementException(
-                            "User not found with id " + userId
-                    ));
+            User user = getUserOrThrow(userId);
 
             ReadStatus readStatus = readStatusMapper.toEntity(user, saved, now);
             readStatusRepository.save(readStatus);
@@ -85,12 +84,9 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional(readOnly = true)
     public List<ChannelResponse> findAllByUserId(UUID userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "User with id " + userId + " not found"
-                ));
+        User user = getUserOrThrow(userId);
 
-        List<UUID> participatedChannelIds = readStatusRepository.findAllByUser_Id(userId).stream()
+        List<UUID> participatedChannelIds = readStatusRepository.findAllByUser_Id(user.getId()).stream()
                 .map(readStatus -> readStatus.getChannel().getId())
                 .toList();
 
@@ -110,7 +106,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = getChannelOrThrow(channelId);
 
         if (channel.getType() == ChannelType.PRIVATE) {
-            throw new IllegalStateException("Private channel cannot be updated");
+           throw new PrivateChannelUpdateNotAllowedException(channelId);
         }
 
         channel.update(request.newName(), request.newDescription());
@@ -157,8 +153,11 @@ public class BasicChannelService implements ChannelService {
 
     private Channel getChannelOrThrow(UUID channelId) {
         return channelRepository.findById(channelId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Channel with id " + channelId + " not found"
-                ));
+                .orElseThrow(() -> new ChannelNotFoundException(channelId));
+    }
+
+    private User getUserOrThrow(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 }

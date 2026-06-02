@@ -9,6 +9,9 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -17,7 +20,6 @@ import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -41,15 +43,8 @@ public class BasicMessageService implements MessageService {
             MessageCreateRequest request,
             List<BinaryContentCreateRequest> binaryContentCreateRequests
     ) {
-        Channel channel = channelRepository.findById(request.channelId())
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Channel not found with id " + request.channelId()
-                ));
-
-        User author = userRepository.findById(request.authorId())
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Author not found with id " + request.authorId()
-                ));
+        Channel channel = getChannelOrThrow(request.channelId());
+        User author = getUserOrThrow(request.authorId());
 
         List<BinaryContent> attachments = binaryContentCreateRequests.stream()
                 .map(binaryContentService::createBinaryContent)
@@ -135,11 +130,19 @@ public class BasicMessageService implements MessageService {
         }
     }
 
+    private Channel getChannelOrThrow(UUID channelId) {
+        return channelRepository.findById(channelId)
+                .orElseThrow(() -> new ChannelNotFoundException(channelId));
+    }
+
+    private User getUserOrThrow(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
     private Message getMessageOrThrow(UUID messageId) {
         return messageRepository.findById(messageId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Message with id " + messageId + " not found"
-                ));
+                .orElseThrow(() -> new MessageNotFoundException(messageId));
     }
 
     private List<UUID> getAttachmentIds(Message message) {

@@ -5,6 +5,9 @@ import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.user.User;
 import com.sprint.mission.discodeit.entity.user.UserStatus;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserStatusAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -27,15 +30,10 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     @Transactional
     public UserStatusResponse create(UserStatusCreateRequest request) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException(
-                        "User not found with id " + request.userId()
-                ));
+        User user = getUserOrThrow(request.userId());
 
         if (userStatusRepository.findByUser_Id(request.userId()).isPresent()) {
-            throw new IllegalStateException(
-                    "User status already exists for user id " + request.userId()
-            );
+            throw new UserStatusAlreadyExistsException(request.userId());
         }
 
         UserStatus userStatus = userStatusMapper.toEntity(user, request.lastActiveAt());
@@ -46,8 +44,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserStatusResponse findById(UUID id) {
-        UserStatus userStatus = getUserStatusOrThrow(id);
+    public UserStatusResponse findById(UUID userStatusId) {
+        UserStatus userStatus = getUserStatusByIdOrThrow(userStatusId);
         return userStatusMapper.toResponse(userStatus);
     }
 
@@ -61,8 +59,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     @Transactional
-    public UserStatusResponse update(UUID id, UserStatusUpdateRequest request) {
-        UserStatus userStatus = getUserStatusOrThrow(id);
+    public UserStatusResponse update(UUID userStatusId, UserStatusUpdateRequest request) {
+        UserStatus userStatus = getUserStatusByIdOrThrow(userStatusId);
 
         userStatus.updateLastActiveAt(request.newLastActiveAt());
 
@@ -72,10 +70,10 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     @Transactional
     public UserStatusResponse updateByUserId(UUID userId, UserStatusUpdateRequest request) {
-        UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "No user status found for user id " + userId
-                ));
+        User user = getUserOrThrow(userId);
+
+        UserStatus userStatus = userStatusRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> UserStatusNotFoundException.byUserId(user.getId()));
 
         userStatus.updateLastActiveAt(request.newLastActiveAt());
 
@@ -84,15 +82,18 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     @Transactional
-    public void delete(UUID id) {
-        UserStatus userStatus = getUserStatusOrThrow(id);
+    public void delete(UUID userStatusId) {
+        UserStatus userStatus = getUserStatusByIdOrThrow(userStatusId);
         userStatusRepository.delete(userStatus);
     }
 
-    private UserStatus getUserStatusOrThrow(UUID id) {
-        return userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "UserStatus with id " + id + " not found"
-                ));
+    private User getUserOrThrow(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    private UserStatus getUserStatusByIdOrThrow(UUID userStatusId) {
+        return userStatusRepository.findById(userStatusId)
+                .orElseThrow(() -> new UserStatusNotFoundException(userStatusId));
     }
 }
