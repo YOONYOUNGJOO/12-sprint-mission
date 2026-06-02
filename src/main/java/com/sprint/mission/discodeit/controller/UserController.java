@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,7 +31,7 @@ public class UserController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> create(
-            @RequestPart("userCreateRequest") UserCreateRequest userCreateRequest,
+            @Valid @RequestPart("userCreateRequest") UserCreateRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
         Optional<BinaryContentCreateRequest> binaryContent = Optional.empty();
@@ -64,7 +65,7 @@ public class UserController {
     @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> update(
             @PathVariable UUID userId,
-            @RequestPart("userUpdateRequest") UserUpdateRequest userUpdateRequest,
+            @Valid @RequestPart("userUpdateRequest") UserUpdateRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
         Optional<BinaryContentCreateRequest> binaryContent = Optional.empty();
@@ -93,7 +94,7 @@ public class UserController {
     @PatchMapping("/{userId}/userStatus")
     public ResponseEntity<UserStatusResponse> updateOnlineStatus(
             @PathVariable UUID userId,
-            @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
+            @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
     ) {
         UserStatusResponse userStatusResponse = userStatusService.updateByUserId(userId, userStatusUpdateRequest);
         return ResponseEntity.ok(userStatusResponse);

@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,7 +40,7 @@ public class MessageController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MessageResponse> send(
-            @RequestPart("messageCreateRequest") MessageCreateRequest messageCreateRequest,
+            @Valid @RequestPart("messageCreateRequest") MessageCreateRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
         List<BinaryContentCreateRequest> attachmentList = List.of();
@@ -83,7 +85,7 @@ public class MessageController {
     @PatchMapping("/{messageId}")
     public ResponseEntity<MessageResponse> update(
             @PathVariable UUID messageId,
-            @RequestBody MessageUpdateRequest messageUpdateRequest
+            @Valid @RequestBody MessageUpdateRequest messageUpdateRequest
     ) {
         MessageResponse messageResponse = messageService.update(messageId, messageUpdateRequest);
         return ResponseEntity.ok(messageResponse);
