@@ -2,8 +2,8 @@ package com.sprint.mission.discodeit.service.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.discodeit.dto.Auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
@@ -67,20 +67,20 @@ class BasicAuthServiceTest {
                 true
         );
 
-        when(userRepository.findByUsername("user1"))
-                .thenReturn(Optional.of(user));
-        when(userStatusRepository.findByUser_Id(userId))
-                .thenReturn(Optional.of(userStatus));
-        when(userMapper.toResponse(user, userStatus))
-                .thenReturn(expectedResponse);
+        given(userRepository.findByUsername("user1"))
+                .willReturn(Optional.of(user));
+        given(userStatusRepository.findByUser_Id(userId))
+                .willReturn(Optional.of(userStatus));
+        given(userMapper.toResponse(user, userStatus))
+                .willReturn(expectedResponse);
 
         UserResponse result = authService.login(request);
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(userRepository).findByUsername("user1");
-        verify(userStatusRepository).findByUser_Id(userId);
-        verify(userMapper).toResponse(user, userStatus);
+        then(userRepository).should().findByUsername("user1");
+        then(userStatusRepository).should().findByUser_Id(userId);
+        then(userMapper).should().toResponse(user, userStatus);
     }
 
     @Test
@@ -88,13 +88,13 @@ class BasicAuthServiceTest {
     void login_fail_userNotFound() {
         LoginRequest request = new LoginRequest("unknown", "password");
 
-        when(userRepository.findByUsername("unknown"))
-                .thenReturn(Optional.empty());
+        given(userRepository.findByUsername("unknown"))
+                .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(userRepository).findByUsername("unknown");
+        then(userRepository).should().findByUsername("unknown");
     }
 
     @Test
@@ -109,13 +109,13 @@ class BasicAuthServiceTest {
                 .password("password")
                 .build();
 
-        when(userRepository.findByUsername("user1"))
-                .thenReturn(Optional.of(user));
+        given(userRepository.findByUsername("user1"))
+                .willReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(InvalidPasswordException.class);
 
-        verify(userRepository).findByUsername("user1");
+        then(userRepository).should().findByUsername("user1");
     }
 
     @Test
@@ -131,15 +131,15 @@ class BasicAuthServiceTest {
                 .password("password")
                 .build();
 
-        when(userRepository.findByUsername("user1"))
-                .thenReturn(Optional.of(user));
-        when(userStatusRepository.findByUser_Id(userId))
-                .thenReturn(Optional.empty());
+        given(userRepository.findByUsername("user1"))
+                .willReturn(Optional.of(user));
+        given(userStatusRepository.findByUser_Id(userId))
+                .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UserStatusNotFoundException.class);
 
-        verify(userRepository).findByUsername("user1");
-        verify(userStatusRepository).findByUser_Id(userId);
+        then(userRepository).should().findByUsername("user1");
+        then(userStatusRepository).should().findByUser_Id(userId);
     }
 }

@@ -3,8 +3,8 @@ package com.sprint.mission.discodeit.service.basic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
@@ -69,19 +69,19 @@ class BasicBinaryContentServiceTest {
                 "text/plain"
         );
 
-        when(binaryContentMapper.toEntity(request)).thenReturn(binaryContent);
-        when(binaryContentRepository.save(binaryContent)).thenReturn(savedBinaryContent);
-        when(binaryContentStorage.put(binaryContentId, request.data())).thenReturn(binaryContentId);
-        when(binaryContentMapper.toResponse(savedBinaryContent)).thenReturn(expectedResponse);
+        given(binaryContentMapper.toEntity(request)).willReturn(binaryContent);
+        given(binaryContentRepository.save(binaryContent)).willReturn(savedBinaryContent);
+        given(binaryContentStorage.put(binaryContentId, request.data())).willReturn(binaryContentId);
+        given(binaryContentMapper.toResponse(savedBinaryContent)).willReturn(expectedResponse);
 
         BinaryContentResponse result = binaryContentService.create(request);
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(binaryContentMapper).toEntity(request);
-        verify(binaryContentRepository).save(binaryContent);
-        verify(binaryContentStorage).put(binaryContentId, request.data());
-        verify(binaryContentMapper).toResponse(savedBinaryContent);
+        then(binaryContentMapper).should().toEntity(request);
+        then(binaryContentRepository).should().save(binaryContent);
+        then(binaryContentStorage).should().put(binaryContentId, request.data());
+        then(binaryContentMapper).should().toResponse(savedBinaryContent);
     }
 
     @Test
@@ -108,17 +108,17 @@ class BasicBinaryContentServiceTest {
                 .contentType("text/plain")
                 .build();
 
-        when(binaryContentMapper.toEntity(request)).thenReturn(binaryContent);
-        when(binaryContentRepository.save(binaryContent)).thenReturn(savedBinaryContent);
-        when(binaryContentStorage.put(binaryContentId, request.data())).thenReturn(binaryContentId);
+        given(binaryContentMapper.toEntity(request)).willReturn(binaryContent);
+        given(binaryContentRepository.save(binaryContent)).willReturn(savedBinaryContent);
+        given(binaryContentStorage.put(binaryContentId, request.data())).willReturn(binaryContentId);
 
         BinaryContent result = binaryContentService.createBinaryContent(request);
 
         assertThat(result).isEqualTo(savedBinaryContent);
 
-        verify(binaryContentMapper).toEntity(request);
-        verify(binaryContentRepository).save(binaryContent);
-        verify(binaryContentStorage).put(binaryContentId, request.data());
+        then(binaryContentMapper).should().toEntity(request);
+        then(binaryContentRepository).should().save(binaryContent);
+        then(binaryContentStorage).should().put(binaryContentId, request.data());
     }
 
     @Test
@@ -140,17 +140,17 @@ class BasicBinaryContentServiceTest {
                 "text/plain"
         );
 
-        when(binaryContentRepository.findById(binaryContentId))
-                .thenReturn(Optional.of(binaryContent));
-        when(binaryContentMapper.toResponse(binaryContent))
-                .thenReturn(expectedResponse);
+        given(binaryContentRepository.findById(binaryContentId))
+                .willReturn(Optional.of(binaryContent));
+        given(binaryContentMapper.toResponse(binaryContent))
+                .willReturn(expectedResponse);
 
         BinaryContentResponse result = binaryContentService.findById(binaryContentId);
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(binaryContentRepository).findById(binaryContentId);
-        verify(binaryContentMapper).toResponse(binaryContent);
+        then(binaryContentRepository).should().findById(binaryContentId);
+        then(binaryContentMapper).should().toResponse(binaryContent);
     }
 
     @Test
@@ -158,13 +158,13 @@ class BasicBinaryContentServiceTest {
     void findById_fail_notFound() {
         UUID binaryContentId = UUID.randomUUID();
 
-        when(binaryContentRepository.findById(binaryContentId))
-                .thenReturn(Optional.empty());
+        given(binaryContentRepository.findById(binaryContentId))
+                .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> binaryContentService.findById(binaryContentId))
                 .isInstanceOf(BinaryContentNotFoundException.class);
 
-        verify(binaryContentRepository).findById(binaryContentId);
+        then(binaryContentRepository).should().findById(binaryContentId);
     }
 
     @Test
@@ -203,18 +203,18 @@ class BasicBinaryContentServiceTest {
 
         List<UUID> ids = List.of(binaryContentId1, binaryContentId2);
 
-        when(binaryContentRepository.findAllById(ids))
-                .thenReturn(List.of(binaryContent1, binaryContent2));
-        when(binaryContentMapper.toResponse(binaryContent1)).thenReturn(response1);
-        when(binaryContentMapper.toResponse(binaryContent2)).thenReturn(response2);
+        given(binaryContentRepository.findAllById(ids))
+                .willReturn(List.of(binaryContent1, binaryContent2));
+        given(binaryContentMapper.toResponse(binaryContent1)).willReturn(response1);
+        given(binaryContentMapper.toResponse(binaryContent2)).willReturn(response2);
 
         List<BinaryContentResponse> result = binaryContentService.findAllByIdIn(ids);
 
         assertThat(result).containsExactly(response1, response2);
 
-        verify(binaryContentRepository).findAllById(ids);
-        verify(binaryContentMapper).toResponse(binaryContent1);
-        verify(binaryContentMapper).toResponse(binaryContent2);
+        then(binaryContentRepository).should().findAllById(ids);
+        then(binaryContentMapper).should().toResponse(binaryContent1);
+        then(binaryContentMapper).should().toResponse(binaryContent2);
     }
 
     @Test
@@ -229,14 +229,14 @@ class BasicBinaryContentServiceTest {
                 .contentType("text/plain")
                 .build();
 
-        when(binaryContentRepository.findById(binaryContentId))
-                .thenReturn(Optional.of(binaryContent));
+        given(binaryContentRepository.findById(binaryContentId))
+                .willReturn(Optional.of(binaryContent));
 
         binaryContentService.delete(binaryContentId);
 
-        verify(binaryContentRepository).findById(binaryContentId);
-        verify(binaryContentRepository).delete(binaryContent);
-        verify(binaryContentStorage).delete(binaryContentId);
+        then(binaryContentRepository).should().findById(binaryContentId);
+        then(binaryContentRepository).should().delete(binaryContent);
+        then(binaryContentStorage).should().delete(binaryContentId);
     }
 
     @Test
@@ -244,12 +244,12 @@ class BasicBinaryContentServiceTest {
     void delete_fail_notFound() {
         UUID binaryContentId = UUID.randomUUID();
 
-        when(binaryContentRepository.findById(binaryContentId))
-                .thenReturn(Optional.empty());
+        given(binaryContentRepository.findById(binaryContentId))
+                .willReturn(Optional.empty());
 
         assertThatThrownBy(() -> binaryContentService.delete(binaryContentId))
                 .isInstanceOf(BinaryContentNotFoundException.class);
 
-        verify(binaryContentRepository).findById(binaryContentId);
+        then(binaryContentRepository).should().findById(binaryContentId);
     }
 }

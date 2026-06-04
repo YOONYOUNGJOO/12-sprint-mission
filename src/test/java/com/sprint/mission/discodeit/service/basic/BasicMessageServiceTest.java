@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
@@ -112,22 +112,22 @@ class BasicMessageServiceTest {
                 List.of()
         );
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
-        when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
-        when(messageMapper.toEntity(request, channel, author, List.of())).thenReturn(message);
-        when(messageRepository.save(message)).thenReturn(savedMessage);
-        when(messageMapper.toResponse(savedMessage)).thenReturn(expectedResponse);
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
+        given(userRepository.findById(authorId)).willReturn(Optional.of(author));
+        given(messageMapper.toEntity(request, channel, author, List.of())).willReturn(message);
+        given(messageRepository.save(message)).willReturn(savedMessage);
+        given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
 
         MessageResponse result = messageService.create(request, List.of());
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(channelRepository).findById(channelId);
-        verify(userRepository).findById(authorId);
-        verify(messageMapper).toEntity(request, channel, author, List.of());
-        verify(messageRepository).save(message);
-        verify(messageMapper).toResponse(savedMessage);
-        verify(binaryContentService, never()).createBinaryContent(any());
+        then(channelRepository).should().findById(channelId);
+        then(userRepository).should().findById(authorId);
+        then(messageMapper).should().toEntity(request, channel, author, List.of());
+        then(messageRepository).should().save(message);
+        then(messageMapper).should().toResponse(savedMessage);
+        then(binaryContentService).should(never()).createBinaryContent(any());
     }
 
     @Test
@@ -194,21 +194,21 @@ class BasicMessageServiceTest {
                 List.of()
         );
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
-        when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
-        when(binaryContentService.createBinaryContent(attachmentRequest)).thenReturn(attachment);
-        when(messageMapper.toEntity(request, channel, author, List.of(attachment))).thenReturn(message);
-        when(messageRepository.save(message)).thenReturn(savedMessage);
-        when(messageMapper.toResponse(savedMessage)).thenReturn(expectedResponse);
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
+        given(userRepository.findById(authorId)).willReturn(Optional.of(author));
+        given(binaryContentService.createBinaryContent(attachmentRequest)).willReturn(attachment);
+        given(messageMapper.toEntity(request, channel, author, List.of(attachment))).willReturn(message);
+        given(messageRepository.save(message)).willReturn(savedMessage);
+        given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
 
         MessageResponse result = messageService.create(request, List.of(attachmentRequest));
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(binaryContentService).createBinaryContent(attachmentRequest);
-        verify(messageMapper).toEntity(request, channel, author, List.of(attachment));
-        verify(messageRepository).save(message);
-        verify(messageMapper).toResponse(savedMessage);
+        then(binaryContentService).should().createBinaryContent(attachmentRequest);
+        then(messageMapper).should().toEntity(request, channel, author, List.of(attachment));
+        then(messageRepository).should().save(message);
+        then(messageMapper).should().toResponse(savedMessage);
     }
 
     @Test
@@ -223,14 +223,14 @@ class BasicMessageServiceTest {
                 authorId
         );
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.empty());
+        given(channelRepository.findById(channelId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> messageService.create(request, List.of()))
                 .isInstanceOf(ChannelNotFoundException.class);
 
-        verify(channelRepository).findById(channelId);
-        verify(userRepository, never()).findById(any());
-        verify(messageRepository, never()).save(any());
+        then(channelRepository).should().findById(channelId);
+        then(userRepository).should(never()).findById(any());
+        then(messageRepository).should(never()).save(any());
     }
 
     @Test
@@ -251,15 +251,15 @@ class BasicMessageServiceTest {
                 .name("channel")
                 .build();
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
-        when(userRepository.findById(authorId)).thenReturn(Optional.empty());
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
+        given(userRepository.findById(authorId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> messageService.create(request, List.of()))
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(channelRepository).findById(channelId);
-        verify(userRepository).findById(authorId);
-        verify(messageRepository, never()).save(any());
+        then(channelRepository).should().findById(channelId);
+        then(userRepository).should().findById(authorId);
+        then(messageRepository).should(never()).save(any());
     }
 
     @Test
@@ -311,13 +311,13 @@ class BasicMessageServiceTest {
 
         Pageable pageable = Pageable.ofSize(2);
 
-        when(messageRepository.findAllByChannel_IdOrderByCreatedAtDesc(
+        given(messageRepository.findAllByChannel_IdOrderByCreatedAtDesc(
                 any(UUID.class),
                 any(Pageable.class)
-        )).thenReturn(List.of(message1, message2, message3));
+        )).willReturn(List.of(message1, message2, message3));
 
-        when(messageMapper.toResponse(message1)).thenReturn(response1);
-        when(messageMapper.toResponse(message2)).thenReturn(response2);
+        given(messageMapper.toResponse(message1)).willReturn(response1);
+        given(messageMapper.toResponse(message2)).willReturn(response2);
 
         PageResponse<MessageResponse> result =
                 messageService.findAllByChannelId(channelId, null, pageable);
@@ -327,13 +327,13 @@ class BasicMessageServiceTest {
         assertThat(result.size()).isEqualTo(2);
         assertThat(result.hasNext()).isTrue();
 
-        verify(messageRepository).findAllByChannel_IdOrderByCreatedAtDesc(
+        then(messageRepository).should().findAllByChannel_IdOrderByCreatedAtDesc(
                 any(UUID.class),
                 any(Pageable.class)
         );
-        verify(messageMapper).toResponse(message1);
-        verify(messageMapper).toResponse(message2);
-        verify(messageMapper, never()).toResponse(message3);
+        then(messageMapper).should().toResponse(message1);
+        then(messageMapper).should().toResponse(message2);
+        then(messageMapper).should(never()).toResponse(message3);
     }
 
     @Test
@@ -361,13 +361,13 @@ class BasicMessageServiceTest {
 
         Pageable pageable = Pageable.ofSize(2);
 
-        when(messageRepository.findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
+        given(messageRepository.findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
                 any(UUID.class),
                 any(Instant.class),
                 any(Pageable.class)
-        )).thenReturn(List.of(message));
+        )).willReturn(List.of(message));
 
-        when(messageMapper.toResponse(message)).thenReturn(response);
+        given(messageMapper.toResponse(message)).willReturn(response);
 
         PageResponse<MessageResponse> result =
                 messageService.findAllByChannelId(channelId, cursor, pageable);
@@ -377,12 +377,12 @@ class BasicMessageServiceTest {
         assertThat(result.size()).isEqualTo(2);
         assertThat(result.hasNext()).isFalse();
 
-        verify(messageRepository).findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
+        then(messageRepository).should().findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
                 any(UUID.class),
                 any(Instant.class),
                 any(Pageable.class)
         );
-        verify(messageMapper).toResponse(message);
+        then(messageMapper).should().toResponse(message);
     }
 
     @Test
@@ -407,16 +407,16 @@ class BasicMessageServiceTest {
                 List.of()
         );
 
-        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
-        when(messageMapper.toResponse(message)).thenReturn(expectedResponse);
+        given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
+        given(messageMapper.toResponse(message)).willReturn(expectedResponse);
 
         MessageResponse result = messageService.update(messageId, request);
 
         assertThat(result).isEqualTo(expectedResponse);
         assertThat(message.getContent()).isEqualTo("updated");
 
-        verify(messageRepository).findById(messageId);
-        verify(messageMapper).toResponse(message);
+        then(messageRepository).should().findById(messageId);
+        then(messageMapper).should().toResponse(message);
     }
 
     @Test
@@ -426,13 +426,13 @@ class BasicMessageServiceTest {
 
         MessageUpdateRequest request = new MessageUpdateRequest("updated");
 
-        when(messageRepository.findById(messageId)).thenReturn(Optional.empty());
+        given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> messageService.update(messageId, request))
                 .isInstanceOf(MessageNotFoundException.class);
 
-        verify(messageRepository).findById(messageId);
-        verify(messageMapper, never()).toResponse(any());
+        then(messageRepository).should().findById(messageId);
+        then(messageMapper).should(never()).toResponse(any());
     }
 
     @Test
@@ -462,14 +462,14 @@ class BasicMessageServiceTest {
                 .attachments(new ArrayList<>(List.of(attachment1, attachment2)))
                 .build();
 
-        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+        given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
 
         messageService.delete(messageId);
 
-        verify(messageRepository).findById(messageId);
-        verify(messageRepository).delete(message);
-        verify(binaryContentService).delete(attachmentId1);
-        verify(binaryContentService).delete(attachmentId2);
+        then(messageRepository).should().findById(messageId);
+        then(messageRepository).should().delete(message);
+        then(binaryContentService).should().delete(attachmentId1);
+        then(binaryContentService).should().delete(attachmentId2);
     }
 
     @Test
@@ -477,13 +477,13 @@ class BasicMessageServiceTest {
     void delete_fail_messageNotFound() {
         UUID messageId = UUID.randomUUID();
 
-        when(messageRepository.findById(messageId)).thenReturn(Optional.empty());
+        given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> messageService.delete(messageId))
                 .isInstanceOf(MessageNotFoundException.class);
 
-        verify(messageRepository).findById(messageId);
-        verify(messageRepository, never()).delete(any());
-        verify(binaryContentService, never()).delete(any());
+        then(messageRepository).should().findById(messageId);
+        then(messageRepository).should(never()).delete(any());
+        then(binaryContentService).should(never()).delete(any());
     }
 }

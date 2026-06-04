@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
@@ -92,25 +92,25 @@ class BasicUserServiceTest {
                 true
         );
 
-        when(userRepository.existsByUsername("user1")).thenReturn(false);
-        when(userRepository.existsByEmail("user1@test.com")).thenReturn(false);
-        when(userMapper.toEntity(request, null)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(savedUser);
-        when(userStatusMapper.toEntity(any(User.class), any(Instant.class))).thenReturn(userStatus);
-        when(userStatusRepository.save(userStatus)).thenReturn(userStatus);
-        when(userMapper.toResponse(savedUser, userStatus)).thenReturn(expectedResponse);
+        given(userRepository.existsByUsername("user1")).willReturn(false);
+        given(userRepository.existsByEmail("user1@test.com")).willReturn(false);
+        given(userMapper.toEntity(request, null)).willReturn(user);
+        given(userRepository.save(user)).willReturn(savedUser);
+        given(userStatusMapper.toEntity(any(User.class), any(Instant.class))).willReturn(userStatus);
+        given(userStatusRepository.save(userStatus)).willReturn(userStatus);
+        given(userMapper.toResponse(savedUser, userStatus)).willReturn(expectedResponse);
 
         UserResponse result = userService.create(request, Optional.empty());
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(userRepository).existsByUsername("user1");
-        verify(userRepository).existsByEmail("user1@test.com");
-        verify(userMapper).toEntity(request, null);
-        verify(userRepository).save(user);
-        verify(userStatusRepository).save(userStatus);
-        verify(userMapper).toResponse(savedUser, userStatus);
-        verify(binaryContentService, never()).createBinaryContent(any());
+        then(userRepository).should().existsByUsername("user1");
+        then(userRepository).should().existsByEmail("user1@test.com");
+        then(userMapper).should().toEntity(request, null);
+        then(userRepository).should().save(user);
+        then(userStatusRepository).should().save(userStatus);
+        then(userMapper).should().toResponse(savedUser, userStatus);
+        then(binaryContentService).should(never()).createBinaryContent(any());
     }
 
     @Test
@@ -165,24 +165,24 @@ class BasicUserServiceTest {
                 true
         );
 
-        when(userRepository.existsByUsername("user1")).thenReturn(false);
-        when(userRepository.existsByEmail("user1@test.com")).thenReturn(false);
-        when(binaryContentService.createBinaryContent(profileRequest)).thenReturn(profile);
-        when(userMapper.toEntity(request, profile)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(savedUser);
-        when(userStatusMapper.toEntity(any(User.class), any(Instant.class))).thenReturn(userStatus);
-        when(userStatusRepository.save(userStatus)).thenReturn(userStatus);
-        when(userMapper.toResponse(savedUser, userStatus)).thenReturn(expectedResponse);
+        given(userRepository.existsByUsername("user1")).willReturn(false);
+        given(userRepository.existsByEmail("user1@test.com")).willReturn(false);
+        given(binaryContentService.createBinaryContent(profileRequest)).willReturn(profile);
+        given(userMapper.toEntity(request, profile)).willReturn(user);
+        given(userRepository.save(user)).willReturn(savedUser);
+        given(userStatusMapper.toEntity(any(User.class), any(Instant.class))).willReturn(userStatus);
+        given(userStatusRepository.save(userStatus)).willReturn(userStatus);
+        given(userMapper.toResponse(savedUser, userStatus)).willReturn(expectedResponse);
 
         UserResponse result = userService.create(request, Optional.of(profileRequest));
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(binaryContentService).createBinaryContent(profileRequest);
-        verify(userMapper).toEntity(request, profile);
-        verify(userRepository).save(user);
-        verify(userStatusRepository).save(userStatus);
-        verify(userMapper).toResponse(savedUser, userStatus);
+        then(binaryContentService).should().createBinaryContent(profileRequest);
+        then(userMapper).should().toEntity(request, profile);
+        then(userRepository).should().save(user);
+        then(userStatusRepository).should().save(userStatus);
+        then(userMapper).should().toResponse(savedUser, userStatus);
     }
 
     @Test
@@ -194,14 +194,14 @@ class BasicUserServiceTest {
                 "password"
         );
 
-        when(userRepository.existsByUsername("user1")).thenReturn(true);
+        given(userRepository.existsByUsername("user1")).willReturn(true);
 
         assertThatThrownBy(() -> userService.create(request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
-        verify(userRepository).existsByUsername("user1");
-        verify(userRepository, never()).existsByEmail(any());
-        verify(userRepository, never()).save(any());
+        then(userRepository).should().existsByUsername("user1");
+        then(userRepository).should(never()).existsByEmail(any());
+        then(userRepository).should(never()).save(any());
     }
 
     @Test
@@ -213,15 +213,15 @@ class BasicUserServiceTest {
                 "password"
         );
 
-        when(userRepository.existsByUsername("user1")).thenReturn(false);
-        when(userRepository.existsByEmail("user1@test.com")).thenReturn(true);
+        given(userRepository.existsByUsername("user1")).willReturn(false);
+        given(userRepository.existsByEmail("user1@test.com")).willReturn(true);
 
         assertThatThrownBy(() -> userService.create(request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
-        verify(userRepository).existsByUsername("user1");
-        verify(userRepository).existsByEmail("user1@test.com");
-        verify(userRepository, never()).save(any());
+        then(userRepository).should().existsByUsername("user1");
+        then(userRepository).should().existsByEmail("user1@test.com");
+        then(userRepository).should(never()).save(any());
     }
 
     @Test
@@ -250,10 +250,10 @@ class BasicUserServiceTest {
                 null
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.existsByUsername("newUser")).thenReturn(false);
-        when(userRepository.existsByEmail("new@test.com")).thenReturn(false);
-        when(userMapper.toResponse(user)).thenReturn(expectedResponse);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userRepository.existsByUsername("newUser")).willReturn(false);
+        given(userRepository.existsByEmail("new@test.com")).willReturn(false);
+        given(userMapper.toResponse(user)).willReturn(expectedResponse);
 
         UserResponse result = userService.update(userId, request, Optional.empty());
 
@@ -262,10 +262,10 @@ class BasicUserServiceTest {
         assertThat(user.getEmail()).isEqualTo("new@test.com");
         assertThat(user.getPassword()).isEqualTo("newPassword");
 
-        verify(userRepository).findById(userId);
-        verify(userRepository).existsByUsername("newUser");
-        verify(userRepository).existsByEmail("new@test.com");
-        verify(userMapper).toResponse(user);
+        then(userRepository).should().findById(userId);
+        then(userRepository).should().existsByUsername("newUser");
+        then(userRepository).should().existsByEmail("new@test.com");
+        then(userMapper).should().toResponse(user);
     }
 
     @Test
@@ -279,14 +279,14 @@ class BasicUserServiceTest {
                 "newPassword"
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.update(userId, request, Optional.empty()))
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(userRepository).findById(userId);
-        verify(userRepository, never()).existsByUsername(any());
-        verify(userRepository, never()).existsByEmail(any());
+        then(userRepository).should().findById(userId);
+        then(userRepository).should(never()).existsByUsername(any());
+        then(userRepository).should(never()).existsByEmail(any());
     }
 
     @Test
@@ -307,15 +307,15 @@ class BasicUserServiceTest {
                 .password("password")
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.existsByEmail("duplicate@test.com")).thenReturn(true);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userRepository.existsByEmail("duplicate@test.com")).willReturn(true);
 
         assertThatThrownBy(() -> userService.update(userId, request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
-        verify(userRepository).findById(userId);
-        verify(userRepository).existsByEmail("duplicate@test.com");
-        verify(userMapper, never()).toResponse(any(User.class));
+        then(userRepository).should().findById(userId);
+        then(userRepository).should().existsByEmail("duplicate@test.com");
+        then(userMapper).should(never()).toResponse(any(User.class));
     }
 
     @Test
@@ -336,16 +336,16 @@ class BasicUserServiceTest {
                 .lastActiveAt(Instant.now())
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userStatusRepository.findByUser_Id(userId)).thenReturn(Optional.of(userStatus));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userStatusRepository.findByUser_Id(userId)).willReturn(Optional.of(userStatus));
 
         userService.delete(userId);
 
-        verify(userRepository).findById(userId);
-        verify(userStatusRepository).findByUser_Id(userId);
-        verify(userStatusRepository).delete(userStatus);
-        verify(userRepository).delete(user);
-        verify(binaryContentService, never()).delete(any());
+        then(userRepository).should().findById(userId);
+        then(userStatusRepository).should().findByUser_Id(userId);
+        then(userStatusRepository).should().delete(userStatus);
+        then(userRepository).should().delete(user);
+        then(binaryContentService).should(never()).delete(any());
     }
 
     @Test
@@ -360,14 +360,14 @@ class BasicUserServiceTest {
                 .password("password")
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userStatusRepository.findByUser_Id(userId)).thenReturn(Optional.empty());
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userStatusRepository.findByUser_Id(userId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.delete(userId))
                 .isInstanceOf(UserStatusNotFoundException.class);
 
-        verify(userRepository).findById(userId);
-        verify(userStatusRepository).findByUser_Id(userId);
-        verify(userRepository, never()).delete(any());
+        then(userRepository).should().findById(userId);
+        then(userStatusRepository).should().findByUser_Id(userId);
+        then(userRepository).should(never()).delete(any());
     }
 }

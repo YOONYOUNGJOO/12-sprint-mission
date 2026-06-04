@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.given;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
@@ -97,15 +97,15 @@ class BasicChannelServiceTest {
                 null
         );
 
-        when(channelRepository.save(any(Channel.class))).thenReturn(savedChannel);
-        when(channelMapper.toResponse(savedChannel, null, List.of())).thenReturn(expectedResponse);
+        given(channelRepository.save(any(Channel.class))).willReturn(savedChannel);
+        given(channelMapper.toResponse(savedChannel, null, List.of())).willReturn(expectedResponse);
 
         ChannelResponse result = channelService.createPublicChannel(request);
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(channelRepository).save(any(Channel.class));
-        verify(channelMapper).toResponse(savedChannel, null, List.of());
+        then(channelRepository).should().save(any(Channel.class));
+        then(channelMapper).should().toResponse(savedChannel, null, List.of());
     }
 
     @Test
@@ -175,31 +175,31 @@ class BasicChannelServiceTest {
                 null
         );
 
-        when(channelRepository.save(any(Channel.class))).thenReturn(savedChannel);
-        when(userRepository.findById(userId1)).thenReturn(Optional.of(user1));
-        when(userRepository.findById(userId2)).thenReturn(Optional.of(user2));
-        when(readStatusMapper.toEntity(any(User.class), any(Channel.class), any(Instant.class)))
-                .thenReturn(readStatus1, readStatus2);
-        when(userMapper.toResponse(user1)).thenReturn(userResponse1);
-        when(userMapper.toResponse(user2)).thenReturn(userResponse2);
-        when(channelMapper.toResponse(
+        given(channelRepository.save(any(Channel.class))).willReturn(savedChannel);
+        given(userRepository.findById(userId1)).willReturn(Optional.of(user1));
+        given(userRepository.findById(userId2)).willReturn(Optional.of(user2));
+        given(readStatusMapper.toEntity(any(User.class), any(Channel.class), any(Instant.class)))
+                .willReturn(readStatus1, readStatus2);
+        given(userMapper.toResponse(user1)).willReturn(userResponse1);
+        given(userMapper.toResponse(user2)).willReturn(userResponse2);
+        given(channelMapper.toResponse(
                 savedChannel,
                 null,
                 List.of(userResponse1, userResponse2)
-        )).thenReturn(expectedResponse);
+        )).willReturn(expectedResponse);
 
         ChannelResponse result = channelService.createPrivateChannel(request);
 
         assertThat(result).isEqualTo(expectedResponse);
 
-        verify(channelRepository).save(any(Channel.class));
-        verify(userRepository).findById(userId1);
-        verify(userRepository).findById(userId2);
-        verify(readStatusRepository).save(readStatus1);
-        verify(readStatusRepository).save(readStatus2);
-        verify(userMapper).toResponse(user1);
-        verify(userMapper).toResponse(user2);
-        verify(channelMapper).toResponse(savedChannel, null, List.of(userResponse1, userResponse2));
+        then(channelRepository).should().save(any(Channel.class));
+        then(userRepository).should().findById(userId1);
+        then(userRepository).should().findById(userId2);
+        then(readStatusRepository).should().save(readStatus1);
+        then(readStatusRepository).should().save(readStatus2);
+        then(userMapper).should().toResponse(user1);
+        then(userMapper).should().toResponse(user2);
+        then(channelMapper).should().toResponse(savedChannel, null, List.of(userResponse1, userResponse2));
     }
 
     @Test
@@ -216,16 +216,16 @@ class BasicChannelServiceTest {
                 .type(ChannelType.PRIVATE)
                 .build();
 
-        when(channelRepository.save(any(Channel.class))).thenReturn(savedChannel);
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        given(channelRepository.save(any(Channel.class))).willReturn(savedChannel);
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> channelService.createPrivateChannel(request))
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(channelRepository).save(any(Channel.class));
-        verify(userRepository).findById(userId);
-        verify(readStatusRepository, never()).save(any());
-        verify(channelMapper, never()).toResponse(any(), any(), any());
+        then(channelRepository).should().save(any(Channel.class));
+        then(userRepository).should().findById(userId);
+        then(readStatusRepository).should(never()).save(any());
+        then(channelMapper).should(never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -254,10 +254,10 @@ class BasicChannelServiceTest {
                 null
         );
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
-        when(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(channelId))
-                .thenReturn(Optional.empty());
-        when(channelMapper.toResponse(channel, null, List.of())).thenReturn(expectedResponse);
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
+        given(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(channelId))
+                .willReturn(Optional.empty());
+        given(channelMapper.toResponse(channel, null, List.of())).willReturn(expectedResponse);
 
         ChannelResponse result = channelService.update(channelId, request);
 
@@ -265,9 +265,9 @@ class BasicChannelServiceTest {
         assertThat(channel.getName()).isEqualTo("new-name");
         assertThat(channel.getDescription()).isEqualTo("new-description");
 
-        verify(channelRepository).findById(channelId);
-        verify(messageRepository).findFirstByChannel_IdOrderByCreatedAtDesc(channelId);
-        verify(channelMapper).toResponse(channel, null, List.of());
+        then(channelRepository).should().findById(channelId);
+        then(messageRepository).should().findFirstByChannel_IdOrderByCreatedAtDesc(channelId);
+        then(channelMapper).should().toResponse(channel, null, List.of());
     }
 
     @Test
@@ -280,13 +280,13 @@ class BasicChannelServiceTest {
                 "new-description"
         );
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.empty());
+        given(channelRepository.findById(channelId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> channelService.update(channelId, request))
                 .isInstanceOf(ChannelNotFoundException.class);
 
-        verify(channelRepository).findById(channelId);
-        verify(channelMapper, never()).toResponse(any(), any(), any());
+        then(channelRepository).should().findById(channelId);
+        then(channelMapper).should(never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -304,13 +304,13 @@ class BasicChannelServiceTest {
                 .type(ChannelType.PRIVATE)
                 .build();
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
 
         assertThatThrownBy(() -> channelService.update(channelId, request))
                 .isInstanceOf(PrivateChannelUpdateNotAllowedException.class);
 
-        verify(channelRepository).findById(channelId);
-        verify(channelMapper, never()).toResponse(any(), any(), any());
+        then(channelRepository).should().findById(channelId);
+        then(channelMapper).should(never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -338,16 +338,16 @@ class BasicChannelServiceTest {
                 .content("message2")
                 .build();
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
-        when(messageRepository.findAllByChannel_Id(channelId)).thenReturn(List.of(message1, message2));
+        given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
+        given(messageRepository.findAllByChannel_Id(channelId)).willReturn(List.of(message1, message2));
 
         channelService.delete(channelId);
 
-        verify(channelRepository).findById(channelId);
-        verify(messageRepository).findAllByChannel_Id(channelId);
-        verify(messageService).delete(messageId1);
-        verify(messageService).delete(messageId2);
-        verify(channelRepository).delete(channel);
+        then(channelRepository).should().findById(channelId);
+        then(messageRepository).should().findAllByChannel_Id(channelId);
+        then(messageService).should().delete(messageId1);
+        then(messageService).should().delete(messageId2);
+        then(channelRepository).should().delete(channel);
     }
 
     @Test
@@ -355,14 +355,14 @@ class BasicChannelServiceTest {
     void delete_fail_channelNotFound() {
         UUID channelId = UUID.randomUUID();
 
-        when(channelRepository.findById(channelId)).thenReturn(Optional.empty());
+        given(channelRepository.findById(channelId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> channelService.delete(channelId))
                 .isInstanceOf(ChannelNotFoundException.class);
 
-        verify(channelRepository).findById(channelId);
-        verify(messageRepository, never()).findAllByChannel_Id(any());
-        verify(channelRepository, never()).delete(any());
+        then(channelRepository).should().findById(channelId);
+        then(messageRepository).should(never()).findAllByChannel_Id(any());
+        then(channelRepository).should(never()).delete(any());
     }
 
     @Test
@@ -423,44 +423,44 @@ class BasicChannelServiceTest {
                 null
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(readStatusRepository.findAllByUser_Id(userId))
-                .thenReturn(List.of(readStatus));
-        when(channelRepository.findAllByTypeOrIdIn(
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(readStatusRepository.findAllByUser_Id(userId))
+                .willReturn(List.of(readStatus));
+        given(channelRepository.findAllByTypeOrIdIn(
                 ChannelType.PUBLIC,
                 List.of(privateChannelId)
-        )).thenReturn(List.of(publicChannel, privateChannel));
+        )).willReturn(List.of(publicChannel, privateChannel));
 
-        when(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId))
-                .thenReturn(Optional.empty());
-        when(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId))
-                .thenReturn(Optional.empty());
+        given(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId))
+                .willReturn(Optional.empty());
+        given(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId))
+                .willReturn(Optional.empty());
 
-        when(readStatusRepository.findAllByChannelIdWithUser(privateChannelId))
-                .thenReturn(List.of(readStatus));
+        given(readStatusRepository.findAllByChannelIdWithUser(privateChannelId))
+                .willReturn(List.of(readStatus));
 
-        when(userMapper.toResponse(user)).thenReturn(userResponse);
-        when(channelMapper.toResponse(publicChannel, null, List.of()))
-                .thenReturn(publicResponse);
-        when(channelMapper.toResponse(privateChannel, null, List.of(userResponse)))
-                .thenReturn(privateResponse);
+        given(userMapper.toResponse(user)).willReturn(userResponse);
+        given(channelMapper.toResponse(publicChannel, null, List.of()))
+                .willReturn(publicResponse);
+        given(channelMapper.toResponse(privateChannel, null, List.of(userResponse)))
+                .willReturn(privateResponse);
 
         List<ChannelResponse> result = channelService.findAllByUserId(userId);
 
         assertThat(result).containsExactly(publicResponse, privateResponse);
 
-        verify(userRepository).findById(userId);
-        verify(readStatusRepository).findAllByUser_Id(userId);
-        verify(channelRepository).findAllByTypeOrIdIn(
+        then(userRepository).should().findById(userId);
+        then(readStatusRepository).should().findAllByUser_Id(userId);
+        then(channelRepository).should().findAllByTypeOrIdIn(
                 ChannelType.PUBLIC,
                 List.of(privateChannelId)
         );
-        verify(messageRepository).findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId);
-        verify(messageRepository).findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId);
-        verify(readStatusRepository).findAllByChannelIdWithUser(privateChannelId);
-        verify(userMapper).toResponse(user);
-        verify(channelMapper).toResponse(publicChannel, null, List.of());
-        verify(channelMapper).toResponse(privateChannel, null, List.of(userResponse));
+        then(messageRepository).should().findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId);
+        then(messageRepository).should().findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId);
+        then(readStatusRepository).should().findAllByChannelIdWithUser(privateChannelId);
+        then(userMapper).should().toResponse(user);
+        then(channelMapper).should().toResponse(publicChannel, null, List.of());
+        then(channelMapper).should().toResponse(privateChannel, null, List.of(userResponse));
     }
 
     @Test
@@ -468,13 +468,13 @@ class BasicChannelServiceTest {
     void findAllByUserId_fail_userNotFound() {
         UUID userId = UUID.randomUUID();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> channelService.findAllByUserId(userId))
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(userRepository).findById(userId);
-        verify(readStatusRepository, never()).findAllByUser_Id(any());
-        verify(channelRepository, never()).findAllByTypeOrIdIn(any(), any());
+        then(userRepository).should().findById(userId);
+        then(readStatusRepository).should(never()).findAllByUser_Id(any());
+        then(channelRepository).should(never()).findAllByTypeOrIdIn(any(), any());
     }
 }
