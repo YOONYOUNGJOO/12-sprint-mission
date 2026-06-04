@@ -6,21 +6,31 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentStorageException;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -43,9 +53,17 @@ public class UserController {
                         profile.getContentType()
                 ));
             } catch (IOException e) {
-                throw new RuntimeException("Failed to read profile file", e);
+                throw new BinaryContentStorageException("READ_PROFILE_FILE", e);
             }
         }
+
+        log.info(
+                "User create API requested. username={}, email={}, hasProfile={}",
+                userCreateRequest.username(),
+                userCreateRequest.email(),
+                binaryContent.isPresent()
+        );
+
         UserResponse userResponse = userService.create(userCreateRequest, binaryContent);
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
@@ -77,9 +95,15 @@ public class UserController {
                         profile.getContentType()
                 ));
             } catch (IOException e) {
-                throw new RuntimeException("Failed to read profile file", e);
+                throw new BinaryContentStorageException("READ_PROFILE_FILE", e);
             }
         }
+
+        log.info(
+                "User update API requested. userId={}, hasProfile={}",
+                userId,
+                binaryContent.isPresent()
+        );
 
         UserResponse userResponse = userService.update(userId, userUpdateRequest, binaryContent);
         return ResponseEntity.ok(userResponse);
@@ -87,6 +111,8 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> delete(@PathVariable UUID userId) {
+        log.warn("User delete API requested. userId={}", userId);
+
         userService.delete(userId);
         return ResponseEntity.noContent().build();
     }

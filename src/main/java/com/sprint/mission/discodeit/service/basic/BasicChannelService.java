@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicChannelService implements ChannelService {
@@ -46,8 +48,12 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public ChannelResponse createPublicChannel(CreatePublicChannelRequest request) {
+        log.info("Public channel create requested. name={}", request.name());
+
         Channel channel = Channel.createPublic(request.name(), request.description());
         Channel saved = channelRepository.save(channel);
+
+        log.info("Public channel created. channelId={}, name={}", saved.getId(), saved.getName());
 
         return channelMapper.toResponse(saved, null, List.of());
     }
@@ -55,6 +61,8 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public ChannelResponse createPrivateChannel(CreatePrivateChannelRequest request) {
+        log.info("Private channel create requested. participantCount={}", request.participantIds().size());
+
         Channel channel = Channel.createPrivate();
         Channel saved = channelRepository.save(channel);
 
@@ -70,6 +78,8 @@ public class BasicChannelService implements ChannelService {
             participants.add(userMapper.toResponse(user));
         }
 
+        log.info("Private channel created. channelId={}, participantCount={}", saved.getId(), participants.size());
+
         return channelMapper.toResponse(saved, null, participants);
     }
 
@@ -84,6 +94,8 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional(readOnly = true)
     public List<ChannelResponse> findAllByUserId(UUID userId) {
+        log.debug("Channel findAllByUserId requested. userId={}", userId);
+
         User user = getUserOrThrow(userId);
 
         List<UUID> participatedChannelIds = readStatusRepository.findAllByUser_Id(user.getId()).stream()
@@ -95,6 +107,8 @@ public class BasicChannelService implements ChannelService {
                 participatedChannelIds
         );
 
+        log.debug("Channel findAllByUserId completed. userId={}, channelCount={}", userId, channels.size());
+
         return channels.stream()
                 .map(this::toResponse)
                 .toList();
@@ -103,13 +117,18 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public ChannelResponse update(UUID channelId, ChannelUpdateRequest request) {
+        log.info("Channel update requested. channelId={}", channelId);
+
         Channel channel = getChannelOrThrow(channelId);
 
         if (channel.getType() == ChannelType.PRIVATE) {
-           throw new PrivateChannelUpdateNotAllowedException(channelId);
+            log.warn("Channel update failed. reason=private_channel_update, channelId={}", channelId);
+            throw new PrivateChannelUpdateNotAllowedException(channelId);
         }
 
         channel.update(request.newName(), request.newDescription());
+
+        log.info("Channel updated. channelId={}", channel.getId());
 
         return toResponse(channel);
     }
@@ -117,6 +136,8 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public void delete(UUID channelId) {
+        log.warn("Channel delete requested. channelId={}", channelId);
+
         Channel channel = getChannelOrThrow(channelId);
 
         List<Message> messages = messageRepository.findAllByChannel_Id(channelId);
@@ -125,6 +146,8 @@ public class BasicChannelService implements ChannelService {
         }
 
         channelRepository.delete(channel);
+
+        log.info("Channel deleted. channelId={}, deletedMessageCount={}", channelId, messages.size());
     }
 
     private ChannelResponse toResponse(Channel channel) {

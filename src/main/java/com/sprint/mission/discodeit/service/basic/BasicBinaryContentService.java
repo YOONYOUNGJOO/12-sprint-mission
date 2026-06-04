@@ -11,9 +11,11 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
@@ -25,14 +27,45 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     @Transactional
     public BinaryContentResponse create(BinaryContentCreateRequest request) {
+        log.info(
+                "BinaryContent create requested. fileName={}, contentType={}, fileSizeBytes={}",
+                request.fileName(),
+                request.contentType(),
+                request.data().length
+        );
+
         BinaryContent saved = saveBinaryContent(request);
+
+        log.info(
+                "BinaryContent created. binaryContentId={}, fileName={}, fileSizeBytes={}",
+                saved.getId(),
+                saved.getFileName(),
+                saved.getSize()
+        );
+
         return binaryContentMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
     public BinaryContent createBinaryContent(BinaryContentCreateRequest request) {
-        return saveBinaryContent(request);
+        log.info(
+                "BinaryContent create requested. fileName={}, contentType={}, fileSizeBytes={}",
+                request.fileName(),
+                request.contentType(),
+                request.data().length
+        );
+
+        BinaryContent saved = saveBinaryContent(request);
+
+        log.info(
+                "BinaryContent created. binaryContentId={}, fileName={}, fileSizeBytes={}",
+                saved.getId(),
+                saved.getFileName(),
+                saved.getSize()
+        );
+
+        return saved;
     }
 
     @Override
@@ -53,10 +86,14 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.warn("BinaryContent delete requested. binaryContentId={}", id);
+
         BinaryContent binaryContent = getBinaryContentOrThrow(id);
 
         binaryContentRepository.delete(binaryContent);
         binaryContentStorage.delete(id);
+
+        log.info("BinaryContent deleted. binaryContentId={}", id);
     }
 
     private BinaryContent getBinaryContentOrThrow(UUID binaryContentId) {

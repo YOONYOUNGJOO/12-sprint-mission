@@ -22,11 +22,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicMessageService implements MessageService {
@@ -43,6 +45,13 @@ public class BasicMessageService implements MessageService {
             MessageCreateRequest request,
             List<BinaryContentCreateRequest> binaryContentCreateRequests
     ) {
+        log.info(
+                "Message create requested. channelId={}, authorId={}, attachmentCount={}",
+                request.channelId(),
+                request.authorId(),
+                binaryContentCreateRequests.size()
+        );
+
         Channel channel = getChannelOrThrow(request.channelId());
         User author = getUserOrThrow(request.authorId());
 
@@ -52,6 +61,13 @@ public class BasicMessageService implements MessageService {
 
         Message message = messageMapper.toEntity(request, channel, author, attachments);
         Message saved = messageRepository.save(message);
+
+        log.info(
+                "Message created. messageId={}, channelId={}, authorId={}",
+                saved.getId(),
+                channel.getId(),
+                author.getId()
+        );
 
         return messageMapper.toResponse(saved);
     }
@@ -69,6 +85,13 @@ public class BasicMessageService implements MessageService {
             Instant cursor,
             Pageable pageable
     ) {
+        log.debug(
+                "Message findAllByChannelId requested. channelId={}, cursor={}, size={}",
+                channelId,
+                cursor,
+                pageable.getPageSize()
+        );
+
         int size = pageable.getPageSize();
         Pageable requestPageable = PageRequest.of(0, size + 1);
 
@@ -97,6 +120,13 @@ public class BasicMessageService implements MessageService {
                 ? pageMessages.get(pageMessages.size() - 1).getCreatedAt()
                 : null;
 
+        log.debug(
+                "Message findAllByChannelId completed. channelId={}, resultCount={}, hasNext={}",
+                channelId,
+                content.size(),
+                hasNext
+        );
+
         return new PageResponse<>(
                 content,
                 nextCursor,
@@ -109,9 +139,13 @@ public class BasicMessageService implements MessageService {
     @Override
     @Transactional
     public MessageResponse update(UUID messageId, MessageUpdateRequest request) {
+        log.info("Message update requested. messageId={}", messageId);
+
         Message message = getMessageOrThrow(messageId);
 
         message.updateContent(request.newContent());
+
+        log.info("Message updated. messageId={}", message.getId());
 
         return messageMapper.toResponse(message);
     }
@@ -119,6 +153,8 @@ public class BasicMessageService implements MessageService {
     @Override
     @Transactional
     public void delete(UUID messageId) {
+        log.warn("Message delete requested. messageId={}", messageId);
+
         Message message = getMessageOrThrow(messageId);
         List<UUID> attachmentIds = getAttachmentIds(message);
 
@@ -128,6 +164,8 @@ public class BasicMessageService implements MessageService {
         for (UUID attachmentId : attachmentIds) {
             binaryContentService.delete(attachmentId);
         }
+
+        log.info("Message deleted. messageId={}, deletedAttachmentCount={}", messageId, attachmentIds.size());
     }
 
     private Channel getChannelOrThrow(UUID channelId) {

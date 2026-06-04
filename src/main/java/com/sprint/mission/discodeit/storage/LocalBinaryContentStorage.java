@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentStorageException;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         try {
             Files.createDirectories(rootPath);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to create storage directory: " + rootPath, e);
+            throw new BinaryContentStorageException("create storage directory: " + rootPath, e);
         }
     }
 
@@ -44,7 +45,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             Files.write(path, bytes);
             return id;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store binary content: " + id, e);
+            throw new BinaryContentStorageException("store binary content: " + id, e);
         }
     }
 
@@ -54,7 +55,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             Path path = resolvePath(id);
             return Files.newInputStream(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read binary content: " + id, e);
+            throw new BinaryContentStorageException("read binary content: " + id, e);
         }
     }
 
@@ -78,7 +79,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             Path path = resolvePath(id);
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete binary content: " + id, e);
+            throw new BinaryContentStorageException("delete binary content: " + id, e);
         }
     }
 

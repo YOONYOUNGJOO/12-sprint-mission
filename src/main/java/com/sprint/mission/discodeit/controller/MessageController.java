@@ -5,14 +5,15 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentStorageException;
 import com.sprint.mission.discodeit.service.MessageService;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/messages")
@@ -55,11 +57,18 @@ public class MessageController {
                                     attachment.getContentType()
                             );
                         } catch (IOException e) {
-                            throw new IllegalStateException("Failed to read attachment file", e);
+                            throw new BinaryContentStorageException("READ_ATTACHMENT_FILE", e);
                         }
                     })
                     .toList();
         }
+
+        log.info(
+                "Message create API requested. channelId={}, authorId={}, attachmentCount={}",
+                messageCreateRequest.channelId(),
+                messageCreateRequest.authorId(),
+                attachmentList.size()
+        );
 
         MessageResponse messageResponse = messageService.create(messageCreateRequest, attachmentList);
         return ResponseEntity.status(HttpStatus.CREATED).body(messageResponse);
@@ -87,12 +96,16 @@ public class MessageController {
             @PathVariable UUID messageId,
             @Valid @RequestBody MessageUpdateRequest messageUpdateRequest
     ) {
+        log.info("Message update API requested. messageId={}", messageId);
+
         MessageResponse messageResponse = messageService.update(messageId, messageUpdateRequest);
         return ResponseEntity.ok(messageResponse);
     }
 
     @DeleteMapping("/{messageId}")
     public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+        log.warn("Message delete API requested. messageId={}", messageId);
+
         messageService.delete(messageId);
         return ResponseEntity.noContent().build();
     }
