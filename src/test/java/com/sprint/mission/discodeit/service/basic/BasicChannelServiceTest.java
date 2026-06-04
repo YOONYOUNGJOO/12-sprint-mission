@@ -362,4 +362,117 @@ class BasicChannelServiceTest {
         verify(messageRepository, never()).findAllByChannel_Id(any());
         verify(channelRepository, never()).delete(any());
     }
+
+    @Test
+    @DisplayName("사용자 ID로 채널 목록 조회 성공")
+    void findAllByUserId_success() {
+        UUID userId = UUID.randomUUID();
+        UUID publicChannelId = UUID.randomUUID();
+        UUID privateChannelId = UUID.randomUUID();
+
+        User user = User.builder()
+                .id(userId)
+                .username("user1")
+                .email("user1@test.com")
+                .password("password")
+                .build();
+
+        Channel publicChannel = Channel.builder()
+                .id(publicChannelId)
+                .type(ChannelType.PUBLIC)
+                .name("public-channel")
+                .description("public-description")
+                .build();
+
+        Channel privateChannel = Channel.builder()
+                .id(privateChannelId)
+                .type(ChannelType.PRIVATE)
+                .build();
+
+        ReadStatus readStatus = ReadStatus.builder()
+                .user(user)
+                .channel(privateChannel)
+                .lastReadAt(Instant.now())
+                .build();
+
+        UserResponse userResponse = new UserResponse(
+                userId,
+                "user1",
+                "user1@test.com",
+                null,
+                null
+        );
+
+        ChannelResponse publicResponse = new ChannelResponse(
+                publicChannelId,
+                ChannelType.PUBLIC,
+                "public-channel",
+                "public-description",
+                List.of(),
+                null
+        );
+
+        ChannelResponse privateResponse = new ChannelResponse(
+                privateChannelId,
+                ChannelType.PRIVATE,
+                null,
+                null,
+                List.of(userResponse),
+                null
+        );
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(readStatusRepository.findAllByUser_Id(userId))
+                .thenReturn(List.of(readStatus));
+        when(channelRepository.findAllByTypeOrIdIn(
+                ChannelType.PUBLIC,
+                List.of(privateChannelId)
+        )).thenReturn(List.of(publicChannel, privateChannel));
+
+        when(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId))
+                .thenReturn(Optional.empty());
+        when(messageRepository.findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId))
+                .thenReturn(Optional.empty());
+
+        when(readStatusRepository.findAllByChannelIdWithUser(privateChannelId))
+                .thenReturn(List.of(readStatus));
+
+        when(userMapper.toResponse(user)).thenReturn(userResponse);
+        when(channelMapper.toResponse(publicChannel, null, List.of()))
+                .thenReturn(publicResponse);
+        when(channelMapper.toResponse(privateChannel, null, List.of(userResponse)))
+                .thenReturn(privateResponse);
+
+        List<ChannelResponse> result = channelService.findAllByUserId(userId);
+
+        assertThat(result).containsExactly(publicResponse, privateResponse);
+
+        verify(userRepository).findById(userId);
+        verify(readStatusRepository).findAllByUser_Id(userId);
+        verify(channelRepository).findAllByTypeOrIdIn(
+                ChannelType.PUBLIC,
+                List.of(privateChannelId)
+        );
+        verify(messageRepository).findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId);
+        verify(messageRepository).findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId);
+        verify(readStatusRepository).findAllByChannelIdWithUser(privateChannelId);
+        verify(userMapper).toResponse(user);
+        verify(channelMapper).toResponse(publicChannel, null, List.of());
+        verify(channelMapper).toResponse(privateChannel, null, List.of(userResponse));
+    }
+
+    @Test
+    @DisplayName("사용자 ID로 채널 목록 조회 실패 - 사용자 없음")
+    void findAllByUserId_fail_userNotFound() {
+        UUID userId = UUID.randomUUID();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> channelService.findAllByUserId(userId))
+                .isInstanceOf(UserNotFoundException.class);
+
+        verify(userRepository).findById(userId);
+        verify(readStatusRepository, never()).findAllByUser_Id(any());
+        verify(channelRepository, never()).findAllByTypeOrIdIn(any(), any());
+    }
 }
