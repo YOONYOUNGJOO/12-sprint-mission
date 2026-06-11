@@ -42,6 +42,7 @@ class UserApiIntegrationTest {
     @Test
     @DisplayName("사용자 생성 API 통합 테스트")
     void createUser_success() throws Exception {
+        // given
         UserCreateRequest request = new UserCreateRequest(
                 "user1",
                 "user1@test.com",
@@ -55,6 +56,7 @@ class UserApiIntegrationTest {
                 objectMapper.writeValueAsBytes(request)
         );
 
+        // when
         String responseBody = mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequestPart))
                 .andExpect(status().isCreated())
@@ -69,12 +71,14 @@ class UserApiIntegrationTest {
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         UUID userId = UUID.fromString(jsonNode.get("id").asText());
 
+        // then
         assertThat(userRepository.findById(userId)).isPresent();
     }
 
     @Test
     @DisplayName("사용자 생성 API 실패 - 중복 username")
     void createUser_fail_duplicateUsername() throws Exception {
+        // given
         createUser("user1", "user1@test.com", "password");
 
         UserCreateRequest duplicateRequest = new UserCreateRequest(
@@ -90,18 +94,21 @@ class UserApiIntegrationTest {
                 objectMapper.writeValueAsBytes(duplicateRequest)
         );
 
+        // when & then
         mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequestPart))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_ALREADY_EXISTS"))
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test
     @DisplayName("사용자 단건 조회 API 통합 테스트")
     void findUserById_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
 
+        // when & then
         mockMvc.perform(get("/api/users/{userId}", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
@@ -112,9 +119,11 @@ class UserApiIntegrationTest {
     @Test
     @DisplayName("사용자 목록 조회 API 통합 테스트")
     void findAllUsers_success() throws Exception {
+        // given
         UUID userId1 = createUser("user1", "user1@test.com", "password");
         UUID userId2 = createUser("user2", "user2@test.com", "password");
 
+        // when & then
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == '%s')]".formatted(userId1)).exists())
@@ -124,6 +133,7 @@ class UserApiIntegrationTest {
     @Test
     @DisplayName("사용자 수정 API 통합 테스트")
     void updateUser_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
 
         UserUpdateRequest request = new UserUpdateRequest(
@@ -139,6 +149,7 @@ class UserApiIntegrationTest {
                 objectMapper.writeValueAsBytes(request)
         );
 
+        // when
         mockMvc.perform(multipart("/api/users/{userId}", userId)
                         .file(userUpdateRequestPart)
                         .with(requestBuilder -> {
@@ -150,6 +161,7 @@ class UserApiIntegrationTest {
                 .andExpect(jsonPath("$.username").value("newUser"))
                 .andExpect(jsonPath("$.email").value("new@test.com"));
 
+        // then
         assertThat(userRepository.findById(userId)).isPresent();
         assertThat(userRepository.findById(userId).get().getUsername()).isEqualTo("newUser");
         assertThat(userRepository.findById(userId).get().getEmail()).isEqualTo("new@test.com");
@@ -158,11 +170,14 @@ class UserApiIntegrationTest {
     @Test
     @DisplayName("사용자 삭제 API 통합 테스트")
     void deleteUser_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
 
+        // when
         mockMvc.perform(delete("/api/users/{userId}", userId))
                 .andExpect(status().isNoContent());
 
+        // then
         assertThat(userRepository.findById(userId)).isEmpty();
     }
 

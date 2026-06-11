@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -55,20 +57,22 @@ public class GlobalExceptionHandler {
                ));
    }
 
-   @ExceptionHandler(Exception.class)
-   public ResponseEntity<ErrorResponse> handleException(Exception exception) {
-       Map<String, Object> details = new LinkedHashMap<>();
-       details.put("message", exception.getMessage());
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+        log.error("Unhandled exception", exception);
 
-       return ResponseEntity
-               .status(HttpStatus.INTERNAL_SERVER_ERROR)
-               .body(ErrorResponse.of(
-                       ErrorCode.INTERNAL_SERVER_ERROR,
-                       details,
-                       exception.getClass().getSimpleName(),
-                       HttpStatus.INTERNAL_SERVER_ERROR.value()
-               ));
-   }
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("message", "Unexpected server error occurred.");
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.of(
+                        ErrorCode.INTERNAL_SERVER_ERROR,
+                        details,
+                        exception.getClass().getSimpleName(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                ));
+    }
 
     private HttpStatus getStatus(ErrorCode errorCode) {
 
@@ -81,8 +85,9 @@ public class GlobalExceptionHandler {
                  BINARY_CONTENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
 
             case USER_ALREADY_EXISTS,
-                 USER_STATUS_ALREADY_EXISTS,
-                 PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED,
+                 USER_STATUS_ALREADY_EXISTS -> HttpStatus.CONFLICT;
+
+            case PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED,
                  INVALID_PASSWORD,
                  INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
 

@@ -139,7 +139,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     public void delete(UUID userId) {
-        log.warn("User delete requested. userId={}", userId);
+        log.info("User delete requested. userId={}", userId);
 
         User user = getUserOrThrow(userId);
         UserStatus userStatus = getUserStatusByUserOrThrow(user);
