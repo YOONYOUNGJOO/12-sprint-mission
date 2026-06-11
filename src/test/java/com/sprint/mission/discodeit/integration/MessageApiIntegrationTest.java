@@ -41,6 +41,7 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("메시지 생성 API 통합 테스트")
     void createMessage_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
         UUID channelId = createPublicChannel("channel", "description");
 
@@ -64,6 +65,8 @@ class MessageApiIntegrationTest {
                 "hello".getBytes()
         );
 
+
+        // when & then
         mockMvc.perform(multipart("/api/messages")
                         .file(messageCreateRequestPart)
                         .file(attachmentPart))
@@ -78,6 +81,7 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("메시지 생성 API 실패 - 존재하지 않는 채널")
     void createMessage_fail_channelNotFound() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
         UUID unknownChannelId = UUID.randomUUID();
 
@@ -94,6 +98,8 @@ class MessageApiIntegrationTest {
                 objectMapper.writeValueAsBytes(request)
         );
 
+
+        // when & then
         mockMvc.perform(multipart("/api/messages")
                         .file(messageCreateRequestPart))
                 .andExpect(status().isNotFound())
@@ -104,11 +110,14 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("채널 ID로 메시지 목록 조회 API 통합 테스트")
     void findAllByChannelId_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
         UUID channelId = createPublicChannel("channel", "description");
 
         UUID messageId = createMessage("hello", channelId, userId);
 
+
+        // when & then
         mockMvc.perform(get("/api/messages")
                         .param("channelId", channelId.toString())
                         .param("size", "50"))
@@ -120,12 +129,15 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("메시지 수정 API 통합 테스트")
     void updateMessage_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
         UUID channelId = createPublicChannel("channel", "description");
         UUID messageId = createMessage("hello", channelId, userId);
 
         MessageUpdateRequest request = new MessageUpdateRequest("updated");
 
+
+        // when & then
         mockMvc.perform(patch("/api/messages/{messageId}", messageId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -138,10 +150,13 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("메시지 수정 API 실패 - 존재하지 않는 메시지")
     void updateMessage_fail_messageNotFound() throws Exception {
+        // given
         UUID unknownMessageId = UUID.randomUUID();
 
         MessageUpdateRequest request = new MessageUpdateRequest("updated");
 
+
+        // when & then
         mockMvc.perform(patch("/api/messages/{messageId}", unknownMessageId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -153,10 +168,13 @@ class MessageApiIntegrationTest {
     @Test
     @DisplayName("메시지 삭제 API 통합 테스트")
     void deleteMessage_success() throws Exception {
+        // given
         UUID userId = createUser("user1", "user1@test.com", "password");
         UUID channelId = createPublicChannel("channel", "description");
         UUID messageId = createMessage("hello", channelId, userId);
 
+
+        // when & then
         mockMvc.perform(delete("/api/messages/{messageId}", messageId))
                 .andExpect(status().isNoContent());
 

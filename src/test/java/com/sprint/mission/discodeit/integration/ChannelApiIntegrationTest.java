@@ -42,11 +42,14 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("PUBLIC 채널 생성 API 통합 테스트")
     void createPublicChannel_success() throws Exception {
+        // given
         CreatePublicChannelRequest request = new CreatePublicChannelRequest(
                 "public-channel",
                 "public-description"
         );
 
+
+        // when & then
         mockMvc.perform(post("/api/channels/public")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -60,11 +63,14 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("PUBLIC 채널 생성 API 실패 - 요청 값 검증 실패")
     void createPublicChannel_fail_invalidRequest() throws Exception {
+        // given
         CreatePublicChannelRequest request = new CreatePublicChannelRequest(
                 "",
                 "public-description"
         );
 
+
+        // when & then
         mockMvc.perform(post("/api/channels/public")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -76,6 +82,7 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("PRIVATE 채널 생성 API 통합 테스트")
     void createPrivateChannel_success() throws Exception {
+        // given
         UUID userId1 = createUser("user1", "user1@test.com", "password");
         UUID userId2 = createUser("user2", "user2@test.com", "password");
 
@@ -83,6 +90,8 @@ class ChannelApiIntegrationTest {
                 List.of(userId1, userId2)
         );
 
+
+        // when & then
         mockMvc.perform(post("/api/channels/private")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -97,12 +106,15 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("PRIVATE 채널 생성 API 실패 - 존재하지 않는 사용자")
     void createPrivateChannel_fail_userNotFound() throws Exception {
+        // given
         UUID unknownUserId = UUID.randomUUID();
 
         CreatePrivateChannelRequest request = new CreatePrivateChannelRequest(
                 List.of(unknownUserId)
         );
 
+
+        // when & then
         mockMvc.perform(post("/api/channels/private")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -114,6 +126,7 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("사용자 ID로 채널 목록 조회 API 통합 테스트")
     void findAllByUserId_success() throws Exception {
+        // given
         UUID userId1 = createUser("user1", "user1@test.com", "password");
         UUID userId2 = createUser("user2", "user2@test.com", "password");
 
@@ -135,6 +148,8 @@ class ChannelApiIntegrationTest {
                 objectMapper.readTree(privateResponseBody).get("id").asText()
         );
 
+
+        // when & then
         mockMvc.perform(get("/api/channels")
                         .param("userId", userId1.toString()))
                 .andExpect(status().isOk())
@@ -145,6 +160,7 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("채널 수정 API 통합 테스트")
     void updateChannel_success() throws Exception {
+        // given
         UUID channelId = createPublicChannel("public-channel", "public-description");
 
         ChannelUpdateRequest request = new ChannelUpdateRequest(
@@ -152,6 +168,8 @@ class ChannelApiIntegrationTest {
                 "new-description"
         );
 
+
+        // when & then
         mockMvc.perform(patch("/api/channels/{channelId}", channelId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
@@ -165,6 +183,7 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("PRIVATE 채널 수정 API 실패")
     void updatePrivateChannel_fail() throws Exception {
+        // given
         UUID userId1 = createUser("user1", "user1@test.com", "password");
         UUID userId2 = createUser("user2", "user2@test.com", "password");
 
@@ -189,6 +208,8 @@ class ChannelApiIntegrationTest {
                 "new-description"
         );
 
+
+        // when & then
         mockMvc.perform(patch("/api/channels/{channelId}", privateChannelId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(updateRequest)))
@@ -200,8 +221,11 @@ class ChannelApiIntegrationTest {
     @Test
     @DisplayName("채널 삭제 API 통합 테스트")
     void deleteChannel_success() throws Exception {
+        // given
         UUID channelId = createPublicChannel("public-channel", "public-description");
 
+
+        // when & then
         mockMvc.perform(delete("/api/channels/{channelId}", channelId))
                 .andExpect(status().isNoContent());
 

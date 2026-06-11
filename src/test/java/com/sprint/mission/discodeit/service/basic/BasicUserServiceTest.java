@@ -58,6 +58,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 생성 성공 - 프로필 없음")
     void create_success_withoutProfile() {
+        // given
         UserCreateRequest request = new UserCreateRequest(
                 "user1",
                 "user1@test.com",
@@ -100,8 +101,12 @@ class BasicUserServiceTest {
         given(userStatusRepository.save(userStatus)).willReturn(userStatus);
         given(userMapper.toResponse(savedUser, userStatus)).willReturn(expectedResponse);
 
+
+        // when
         UserResponse result = userService.create(request, Optional.empty());
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
 
         then(userRepository).should().existsByUsername("user1");
@@ -116,6 +121,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 생성 성공 - 프로필 있음")
     void create_success_withProfile() {
+        // given
         UserCreateRequest request = new UserCreateRequest(
                 "user1",
                 "user1@test.com",
@@ -174,8 +180,12 @@ class BasicUserServiceTest {
         given(userStatusRepository.save(userStatus)).willReturn(userStatus);
         given(userMapper.toResponse(savedUser, userStatus)).willReturn(expectedResponse);
 
+
+        // when
         UserResponse result = userService.create(request, Optional.of(profileRequest));
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
 
         then(binaryContentService).should().createBinaryContent(profileRequest);
@@ -188,6 +198,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 생성 실패 - username 중복")
     void create_fail_duplicateUsername() {
+        // given
         UserCreateRequest request = new UserCreateRequest(
                 "user1",
                 "user1@test.com",
@@ -196,6 +207,8 @@ class BasicUserServiceTest {
 
         given(userRepository.existsByUsername("user1")).willReturn(true);
 
+
+        // when & then
         assertThatThrownBy(() -> userService.create(request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
@@ -207,6 +220,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 생성 실패 - email 중복")
     void create_fail_duplicateEmail() {
+        // given
         UserCreateRequest request = new UserCreateRequest(
                 "user1",
                 "user1@test.com",
@@ -216,6 +230,8 @@ class BasicUserServiceTest {
         given(userRepository.existsByUsername("user1")).willReturn(false);
         given(userRepository.existsByEmail("user1@test.com")).willReturn(true);
 
+
+        // when & then
         assertThatThrownBy(() -> userService.create(request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
@@ -227,6 +243,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 수정 성공")
     void update_success() {
+        // given
         UUID userId = UUID.randomUUID();
 
         UserUpdateRequest request = new UserUpdateRequest(
@@ -255,8 +272,12 @@ class BasicUserServiceTest {
         given(userRepository.existsByEmail("new@test.com")).willReturn(false);
         given(userMapper.toResponse(user)).willReturn(expectedResponse);
 
+
+        // when
         UserResponse result = userService.update(userId, request, Optional.empty());
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
         assertThat(user.getUsername()).isEqualTo("newUser");
         assertThat(user.getEmail()).isEqualTo("new@test.com");
@@ -271,6 +292,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 수정 실패 - 사용자 없음")
     void update_fail_userNotFound() {
+        // given
         UUID userId = UUID.randomUUID();
 
         UserUpdateRequest request = new UserUpdateRequest(
@@ -281,6 +303,8 @@ class BasicUserServiceTest {
 
         given(userRepository.findById(userId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> userService.update(userId, request, Optional.empty()))
                 .isInstanceOf(UserNotFoundException.class);
 
@@ -292,6 +316,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 수정 실패 - email 중복")
     void update_fail_duplicateEmail() {
+        // given
         UUID userId = UUID.randomUUID();
 
         UserUpdateRequest request = new UserUpdateRequest(
@@ -310,6 +335,8 @@ class BasicUserServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(userRepository.existsByEmail("duplicate@test.com")).willReturn(true);
 
+
+        // when & then
         assertThatThrownBy(() -> userService.update(userId, request, Optional.empty()))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
@@ -321,6 +348,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 삭제 성공 - 프로필 없음")
     void delete_success_withoutProfile() {
+        // given
         UUID userId = UUID.randomUUID();
 
         User user = User.builder()
@@ -339,8 +367,12 @@ class BasicUserServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(userStatusRepository.findByUser_Id(userId)).willReturn(Optional.of(userStatus));
 
+
+        // when
         userService.delete(userId);
 
+
+        // then
         then(userRepository).should().findById(userId);
         then(userStatusRepository).should().findByUser_Id(userId);
         then(userStatusRepository).should().delete(userStatus);
@@ -351,6 +383,7 @@ class BasicUserServiceTest {
     @Test
     @DisplayName("사용자 삭제 실패 - 사용자 상태 없음")
     void delete_fail_userStatusNotFound() {
+        // given
         UUID userId = UUID.randomUUID();
 
         User user = User.builder()
@@ -363,6 +396,8 @@ class BasicUserServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(userStatusRepository.findByUser_Id(userId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> userService.delete(userId))
                 .isInstanceOf(UserStatusNotFoundException.class);
 

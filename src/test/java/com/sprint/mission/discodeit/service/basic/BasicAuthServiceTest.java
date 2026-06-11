@@ -44,6 +44,7 @@ class BasicAuthServiceTest {
     @Test
     @DisplayName("로그인 성공")
     void login_success() {
+        // given
         UUID userId = UUID.randomUUID();
         LoginRequest request = new LoginRequest("user1", "password");
 
@@ -74,8 +75,12 @@ class BasicAuthServiceTest {
         given(userMapper.toResponse(user, userStatus))
                 .willReturn(expectedResponse);
 
+
+        // when
         UserResponse result = authService.login(request);
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
 
         then(userRepository).should().findByUsername("user1");
@@ -86,11 +91,14 @@ class BasicAuthServiceTest {
     @Test
     @DisplayName("로그인 실패 - 존재하지 않는 사용자")
     void login_fail_userNotFound() {
+        // given
         LoginRequest request = new LoginRequest("unknown", "password");
 
         given(userRepository.findByUsername("unknown"))
                 .willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UserNotFoundException.class);
 
@@ -100,6 +108,7 @@ class BasicAuthServiceTest {
     @Test
     @DisplayName("로그인 실패 - 비밀번호 불일치")
     void login_fail_invalidPassword() {
+        // given
         LoginRequest request = new LoginRequest("user1", "wrong-password");
 
         User user = User.builder()
@@ -112,6 +121,8 @@ class BasicAuthServiceTest {
         given(userRepository.findByUsername("user1"))
                 .willReturn(Optional.of(user));
 
+
+        // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(InvalidPasswordException.class);
 
@@ -121,6 +132,7 @@ class BasicAuthServiceTest {
     @Test
     @DisplayName("로그인 실패 - 사용자 상태 없음")
     void login_fail_userStatusNotFound() {
+        // given
         UUID userId = UUID.randomUUID();
         LoginRequest request = new LoginRequest("user1", "password");
 
@@ -136,6 +148,8 @@ class BasicAuthServiceTest {
         given(userStatusRepository.findByUser_Id(userId))
                 .willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UserStatusNotFoundException.class);
 

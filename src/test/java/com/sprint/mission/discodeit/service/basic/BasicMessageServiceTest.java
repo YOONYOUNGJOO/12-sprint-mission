@@ -64,6 +64,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 생성 성공 - 첨부파일 없음")
     void create_success_withoutAttachments() {
+        // given
         UUID channelId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         UUID messageId = UUID.randomUUID();
@@ -118,8 +119,12 @@ class BasicMessageServiceTest {
         given(messageRepository.save(message)).willReturn(savedMessage);
         given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
 
+
+        // when
         MessageResponse result = messageService.create(request, List.of());
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
 
         then(channelRepository).should().findById(channelId);
@@ -133,6 +138,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 생성 성공 - 첨부파일 있음")
     void create_success_withAttachments() {
+        // given
         UUID channelId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         UUID messageId = UUID.randomUUID();
@@ -201,8 +207,12 @@ class BasicMessageServiceTest {
         given(messageRepository.save(message)).willReturn(savedMessage);
         given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
 
+
+        // when
         MessageResponse result = messageService.create(request, List.of(attachmentRequest));
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
 
         then(binaryContentService).should().createBinaryContent(attachmentRequest);
@@ -214,6 +224,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 생성 실패 - 채널 없음")
     void create_fail_channelNotFound() {
+        // given
         UUID channelId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
 
@@ -225,6 +236,8 @@ class BasicMessageServiceTest {
 
         given(channelRepository.findById(channelId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> messageService.create(request, List.of()))
                 .isInstanceOf(ChannelNotFoundException.class);
 
@@ -236,6 +249,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 생성 실패 - 작성자 없음")
     void create_fail_authorNotFound() {
+        // given
         UUID channelId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
 
@@ -254,6 +268,8 @@ class BasicMessageServiceTest {
         given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
         given(userRepository.findById(authorId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> messageService.create(request, List.of()))
                 .isInstanceOf(UserNotFoundException.class);
 
@@ -265,6 +281,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 목록 조회 성공 - 첫 페이지, 다음 페이지 있음")
     void findAllByChannelId_success_firstPage_hasNext() {
+        // given
         UUID channelId = UUID.randomUUID();
 
         Instant cursor1 = Instant.parse("2026-06-04T01:00:00Z");
@@ -320,8 +337,12 @@ class BasicMessageServiceTest {
         given(messageMapper.toResponse(message2)).willReturn(response2);
 
         PageResponse<MessageResponse> result =
+
+                // when
                 messageService.findAllByChannelId(channelId, null, pageable);
 
+
+        // then
         assertThat(result.content()).containsExactly(response1, response2);
         assertThat(result.nextCursor()).isEqualTo(cursor2);
         assertThat(result.size()).isEqualTo(2);
@@ -339,6 +360,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 목록 조회 성공 - 커서 이후, 다음 페이지 없음")
     void findAllByChannelId_success_withCursor_noNext() {
+        // given
         UUID channelId = UUID.randomUUID();
         Instant cursor = Instant.parse("2026-06-04T01:00:00Z");
         Instant createdAt = Instant.parse("2026-06-04T00:59:00Z");
@@ -370,8 +392,12 @@ class BasicMessageServiceTest {
         given(messageMapper.toResponse(message)).willReturn(response);
 
         PageResponse<MessageResponse> result =
+
+                // when
                 messageService.findAllByChannelId(channelId, cursor, pageable);
 
+
+        // then
         assertThat(result.content()).containsExactly(response);
         assertThat(result.nextCursor()).isNull();
         assertThat(result.size()).isEqualTo(2);
@@ -388,6 +414,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 수정 성공")
     void update_success() {
+        // given
         UUID messageId = UUID.randomUUID();
 
         MessageUpdateRequest request = new MessageUpdateRequest("updated");
@@ -410,8 +437,12 @@ class BasicMessageServiceTest {
         given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
         given(messageMapper.toResponse(message)).willReturn(expectedResponse);
 
+
+        // when
         MessageResponse result = messageService.update(messageId, request);
 
+
+        // then
         assertThat(result).isEqualTo(expectedResponse);
         assertThat(message.getContent()).isEqualTo("updated");
 
@@ -422,12 +453,15 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 수정 실패 - 메시지 없음")
     void update_fail_messageNotFound() {
+        // given
         UUID messageId = UUID.randomUUID();
 
         MessageUpdateRequest request = new MessageUpdateRequest("updated");
 
         given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> messageService.update(messageId, request))
                 .isInstanceOf(MessageNotFoundException.class);
 
@@ -438,6 +472,7 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 삭제 성공 - 첨부파일 있음")
     void delete_success_withAttachments() {
+        // given
         UUID messageId = UUID.randomUUID();
         UUID attachmentId1 = UUID.randomUUID();
         UUID attachmentId2 = UUID.randomUUID();
@@ -464,8 +499,12 @@ class BasicMessageServiceTest {
 
         given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
 
+
+        // when
         messageService.delete(messageId);
 
+
+        // then
         then(messageRepository).should().findById(messageId);
         then(messageRepository).should().delete(message);
         then(binaryContentService).should().delete(attachmentId1);
@@ -475,10 +514,13 @@ class BasicMessageServiceTest {
     @Test
     @DisplayName("메시지 삭제 실패 - 메시지 없음")
     void delete_fail_messageNotFound() {
+        // given
         UUID messageId = UUID.randomUUID();
 
         given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
+
+        // when & then
         assertThatThrownBy(() -> messageService.delete(messageId))
                 .isInstanceOf(MessageNotFoundException.class);
 
