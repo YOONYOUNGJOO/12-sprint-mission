@@ -18,12 +18,10 @@ spring:
       ddl-auto: validate
     show-sql: true
 
-  boot:
-    admin:
-      client:
-        url: http://localhost:9090
-        instance:
-          name: discodeit
+management:
+  endpoint:
+    health:
+      show-details: always
 
 logging:
   level:
