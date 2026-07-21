@@ -14,10 +14,11 @@ import com.sprint.mission.discodeit.config.MDCLoggingInterceptor;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.exception.GlobalExceptionHandler;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
@@ -33,6 +35,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, MDCLoggingInterceptor.class})
 class UserControllerTest {
 
@@ -44,9 +47,6 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
-
-    @MockitoBean
-    private UserStatusService userStatusService;
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
@@ -68,7 +68,8 @@ class UserControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                false
+                false,
+                Role.USER
         );
 
         MockMultipartFile userCreateRequestPart = new MockMultipartFile(
@@ -85,7 +86,7 @@ class UserControllerTest {
         // when & then
         mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequestPart))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.username").value("user1"))
                 .andExpect(jsonPath("$.email").value("user1@test.com"))
@@ -133,7 +134,8 @@ class UserControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         when(userService.findById(userId)).thenReturn(response);
@@ -185,7 +187,8 @@ class UserControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         UserResponse response2 = new UserResponse(
@@ -193,7 +196,8 @@ class UserControllerTest {
                 "user2",
                 "user2@test.com",
                 null,
-                false
+                false,
+                Role.USER
         );
 
         when(userService.findAll()).thenReturn(List.of(response1, response2));
@@ -229,7 +233,8 @@ class UserControllerTest {
                 "newUser",
                 "new@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         MockMultipartFile userUpdateRequestPart = new MockMultipartFile(

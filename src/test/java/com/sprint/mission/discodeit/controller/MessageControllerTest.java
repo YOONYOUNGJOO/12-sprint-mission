@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.exception.GlobalExceptionHandler;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +41,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MessageController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, MDCLoggingInterceptor.class})
 class MessageControllerTest {
 
@@ -74,7 +77,8 @@ class MessageControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         BinaryContentResponse attachmentResponse = new BinaryContentResponse(
@@ -170,7 +174,8 @@ class MessageControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         MessageResponse messageResponse = new MessageResponse(
@@ -239,7 +244,8 @@ class MessageControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         MessageResponse response = new MessageResponse(

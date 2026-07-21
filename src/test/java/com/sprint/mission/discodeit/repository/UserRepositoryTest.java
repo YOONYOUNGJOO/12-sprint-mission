@@ -3,8 +3,9 @@ package com.sprint.mission.discodeit.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.entity.user.User;
-import com.sprint.mission.discodeit.entity.user.UserStatus;
+
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,9 +27,6 @@ class UserRepositoryTest {
     private BinaryContentRepository binaryContentRepository;
 
     @Autowired
-    private UserStatusRepository userStatusRepository;
-
-    @Autowired
     private TestEntityManager entityManager;
 
     @Test
@@ -39,6 +37,7 @@ class UserRepositoryTest {
                 .username("user1")
                 .email("user1@test.com")
                 .password("password")
+                .role(Role.USER)
                 .build();
 
         userRepository.saveAndFlush(user);
@@ -76,6 +75,7 @@ class UserRepositoryTest {
                 .username("user1")
                 .email("user1@test.com")
                 .password("password")
+                .role(Role.USER)
                 .build();
 
         userRepository.saveAndFlush(user);
@@ -111,6 +111,7 @@ class UserRepositoryTest {
                 .username("user1")
                 .email("user1@test.com")
                 .password("password")
+                .role(Role.USER)
                 .build();
 
         userRepository.saveAndFlush(user);
@@ -146,6 +147,7 @@ class UserRepositoryTest {
                 .username("user1")
                 .email("user1@test.com")
                 .password("password")
+                .role(Role.USER)
                 .build();
 
 
@@ -176,8 +178,8 @@ class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("사용자 단건 조회 시 profile과 status 함께 조회")
-    void findById_withProfileAndStatus_success() {
+    @DisplayName("사용자 단건 조회 시 profile 함께 조회")
+    void findById_withProfile_success() {
         // given
         BinaryContent profile = BinaryContent.builder()
                 .fileName("profile.png")
@@ -193,17 +195,11 @@ class UserRepositoryTest {
                 .username("user1")
                 .email("user1@test.com")
                 .password("password")
+                .role(Role.USER)
                 .profile(savedProfile)
                 .build();
 
         User savedUser = userRepository.saveAndFlush(user);
-
-        UserStatus status = UserStatus.builder()
-                .user(savedUser)
-                .lastActiveAt(Instant.now())
-                .build();
-
-        userStatusRepository.saveAndFlush(status);
         entityManager.clear();
 
         Optional<User> result = userRepository.findById(savedUser.getId());
@@ -213,7 +209,20 @@ class UserRepositoryTest {
         assertThat(result).isPresent();
         assertThat(result.get().getProfile()).isNotNull();
         assertThat(result.get().getProfile().getFileName()).isEqualTo("profile.png");
-        assertThat(result.get().getStatus()).isNotNull();
-        assertThat(result.get().getStatus().getUser().getId()).isEqualTo(savedUser.getId());
+    }
+
+    @Test
+    @DisplayName("ADMIN 권한 사용자 존재 여부 확인")
+    void existsByRole_success() {
+        User admin = User.builder()
+                .username("admin")
+                .email("admin@test.com")
+                .password("encoded-password")
+                .role(Role.ADMIN)
+                .build();
+
+        userRepository.saveAndFlush(admin);
+
+        assertThat(userRepository.existsByRole(Role.ADMIN)).isTrue();
     }
 }

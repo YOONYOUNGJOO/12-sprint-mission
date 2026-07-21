@@ -12,15 +12,18 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.channel.ChannelType;
 import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -32,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.security.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +61,12 @@ class BasicMessageServiceTest {
 
     @Mock
     private BinaryContentService binaryContentService;
+
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private UserSessionService userSessionService;
 
     @InjectMocks
     private BasicMessageService messageService;
@@ -113,11 +123,17 @@ class BasicMessageServiceTest {
                 List.of()
         );
 
+        UserResponse authorResponse = new UserResponse(
+                authorId, "user1", "user1@test.com", null, false, Role.USER
+        );
+
         given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
         given(userRepository.findById(authorId)).willReturn(Optional.of(author));
         given(messageMapper.toEntity(request, channel, author, List.of())).willReturn(message);
         given(messageRepository.save(message)).willReturn(savedMessage);
-        given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
+        given(userSessionService.isOnline(authorId)).willReturn(false);
+        given(userMapper.toResponse(author, false)).willReturn(authorResponse);
+        given(messageMapper.toResponse(savedMessage, authorResponse)).willReturn(expectedResponse);
 
 
         // when
@@ -131,7 +147,7 @@ class BasicMessageServiceTest {
         then(userRepository).should().findById(authorId);
         then(messageMapper).should().toEntity(request, channel, author, List.of());
         then(messageRepository).should().save(message);
-        then(messageMapper).should().toResponse(savedMessage);
+        then(messageMapper).should().toResponse(savedMessage, authorResponse);
         then(binaryContentService).should(never()).createBinaryContent(any());
     }
 
@@ -200,12 +216,18 @@ class BasicMessageServiceTest {
                 List.of()
         );
 
+        UserResponse authorResponse = new UserResponse(
+                authorId, "user1", "user1@test.com", null, false, Role.USER
+        );
+
         given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
         given(userRepository.findById(authorId)).willReturn(Optional.of(author));
         given(binaryContentService.createBinaryContent(attachmentRequest)).willReturn(attachment);
         given(messageMapper.toEntity(request, channel, author, List.of(attachment))).willReturn(message);
         given(messageRepository.save(message)).willReturn(savedMessage);
-        given(messageMapper.toResponse(savedMessage)).willReturn(expectedResponse);
+        given(userSessionService.isOnline(authorId)).willReturn(false);
+        given(userMapper.toResponse(author, false)).willReturn(authorResponse);
+        given(messageMapper.toResponse(savedMessage, authorResponse)).willReturn(expectedResponse);
 
 
         // when
@@ -218,7 +240,7 @@ class BasicMessageServiceTest {
         then(binaryContentService).should().createBinaryContent(attachmentRequest);
         then(messageMapper).should().toEntity(request, channel, author, List.of(attachment));
         then(messageRepository).should().save(message);
-        then(messageMapper).should().toResponse(savedMessage);
+        then(messageMapper).should().toResponse(savedMessage, authorResponse);
     }
 
     @Test
@@ -333,8 +355,8 @@ class BasicMessageServiceTest {
                 any(Pageable.class)
         )).willReturn(List.of(message1, message2, message3));
 
-        given(messageMapper.toResponse(message1)).willReturn(response1);
-        given(messageMapper.toResponse(message2)).willReturn(response2);
+        given(messageMapper.toResponse(message1, null)).willReturn(response1);
+        given(messageMapper.toResponse(message2, null)).willReturn(response2);
 
         PageResponse<MessageResponse> result =
 
@@ -352,9 +374,9 @@ class BasicMessageServiceTest {
                 any(UUID.class),
                 any(Pageable.class)
         );
-        then(messageMapper).should().toResponse(message1);
-        then(messageMapper).should().toResponse(message2);
-        then(messageMapper).should(never()).toResponse(message3);
+        then(messageMapper).should().toResponse(message1, null);
+        then(messageMapper).should().toResponse(message2, null);
+        then(messageMapper).should(never()).toResponse(message3, null);
     }
 
     @Test
@@ -389,7 +411,7 @@ class BasicMessageServiceTest {
                 any(Pageable.class)
         )).willReturn(List.of(message));
 
-        given(messageMapper.toResponse(message)).willReturn(response);
+        given(messageMapper.toResponse(message, null)).willReturn(response);
 
         PageResponse<MessageResponse> result =
 
@@ -408,7 +430,7 @@ class BasicMessageServiceTest {
                 any(Instant.class),
                 any(Pageable.class)
         );
-        then(messageMapper).should().toResponse(message);
+        then(messageMapper).should().toResponse(message, null);
     }
 
     @Test
@@ -435,7 +457,7 @@ class BasicMessageServiceTest {
         );
 
         given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
-        given(messageMapper.toResponse(message)).willReturn(expectedResponse);
+        given(messageMapper.toResponse(message, null)).willReturn(expectedResponse);
 
 
         // when
@@ -447,7 +469,7 @@ class BasicMessageServiceTest {
         assertThat(message.getContent()).isEqualTo("updated");
 
         then(messageRepository).should().findById(messageId);
-        then(messageMapper).should().toResponse(message);
+        then(messageMapper).should().toResponse(message, null);
     }
 
     @Test
@@ -466,7 +488,7 @@ class BasicMessageServiceTest {
                 .isInstanceOf(MessageNotFoundException.class);
 
         then(messageRepository).should().findById(messageId);
-        then(messageMapper).should(never()).toResponse(any());
+        then(messageMapper).should(never()).toResponse(any(), any());
     }
 
     @Test

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -11,7 +13,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -58,12 +64,13 @@ class UserApiIntegrationTest {
 
         // when
         String responseBody = mockMvc.perform(multipart("/api/users")
-                        .file(userCreateRequestPart))
-                .andExpect(status().isCreated())
+                        .file(userCreateRequestPart)
+                        .with(csrf()))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.username").value("user1"))
                 .andExpect(jsonPath("$.email").value("user1@test.com"))
-                .andExpect(jsonPath("$.online").value(true))
+                .andExpect(jsonPath("$.online").value(false))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -96,7 +103,8 @@ class UserApiIntegrationTest {
 
         // when & then
         mockMvc.perform(multipart("/api/users")
-                        .file(userCreateRequestPart))
+                        .file(userCreateRequestPart)
+                        .with(csrf()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_ALREADY_EXISTS"))
                 .andExpect(jsonPath("$.status").value(409));
@@ -109,7 +117,8 @@ class UserApiIntegrationTest {
         UUID userId = createUser("user1", "user1@test.com", "password");
 
         // when & then
-        mockMvc.perform(get("/api/users/{userId}", userId))
+        mockMvc.perform(get("/api/users/{userId}", userId)
+                        .with(asUser(userId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.username").value("user1"))
@@ -124,7 +133,8 @@ class UserApiIntegrationTest {
         UUID userId2 = createUser("user2", "user2@test.com", "password");
 
         // when & then
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/users")
+                        .with(asUser(userId1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == '%s')]".formatted(userId1)).exists())
                 .andExpect(jsonPath("$[?(@.id == '%s')]".formatted(userId2)).exists());
@@ -152,6 +162,8 @@ class UserApiIntegrationTest {
         // when
         mockMvc.perform(multipart("/api/users/{userId}", userId)
                         .file(userUpdateRequestPart)
+                        .with(csrf())
+                        .with(asUser(userId))
                         .with(requestBuilder -> {
                             requestBuilder.setMethod("PATCH");
                             return requestBuilder;
@@ -174,7 +186,9 @@ class UserApiIntegrationTest {
         UUID userId = createUser("user1", "user1@test.com", "password");
 
         // when
-        mockMvc.perform(delete("/api/users/{userId}", userId))
+        mockMvc.perform(delete("/api/users/{userId}", userId)
+                        .with(csrf())
+                        .with(asUser(userId)))
                 .andExpect(status().isNoContent());
 
         // then
@@ -196,13 +210,22 @@ class UserApiIntegrationTest {
         );
 
         String responseBody = mockMvc.perform(multipart("/api/users")
-                        .file(userCreateRequestPart))
-                .andExpect(status().isCreated())
+                        .file(userCreateRequestPart)
+                        .with(csrf()))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         return UUID.fromString(jsonNode.get("id").asText());
+    }
+
+    private RequestPostProcessor asUser(UUID userId) {
+        UserResponse response = new UserResponse(
+                userId, "authenticated-user", "authenticated@test.com",
+                null, true, Role.USER
+        );
+        return user(new DiscodeitUserDetails(response, "password"));
     }
 }

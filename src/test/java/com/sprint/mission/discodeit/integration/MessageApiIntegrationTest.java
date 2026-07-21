@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,6 +16,9 @@ import com.sprint.mission.discodeit.dto.channel.CreatePublicChannelRequest;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.user.Role;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +29,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -69,7 +75,9 @@ class MessageApiIntegrationTest {
         // when & then
         mockMvc.perform(multipart("/api/messages")
                         .file(messageCreateRequestPart)
-                        .file(attachmentPart))
+                        .file(attachmentPart)
+                        .with(csrf())
+                        .with(asUser(userId, Role.USER)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.content").value("hello"))
@@ -101,7 +109,9 @@ class MessageApiIntegrationTest {
 
         // when & then
         mockMvc.perform(multipart("/api/messages")
-                        .file(messageCreateRequestPart))
+                        .file(messageCreateRequestPart)
+                        .with(csrf())
+                        .with(asUser(userId, Role.USER)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CHANNEL_NOT_FOUND"))
                 .andExpect(jsonPath("$.status").value(404));
@@ -119,6 +129,7 @@ class MessageApiIntegrationTest {
 
         // when & then
         mockMvc.perform(get("/api/messages")
+                        .with(asUser(userId, Role.USER))
                         .param("channelId", channelId.toString())
                         .param("size", "50"))
                 .andExpect(status().isOk())
@@ -139,6 +150,8 @@ class MessageApiIntegrationTest {
 
         // when & then
         mockMvc.perform(patch("/api/messages/{messageId}", messageId)
+                        .with(csrf())
+                        .with(asUser(userId, Role.USER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isOk())
@@ -158,11 +171,11 @@ class MessageApiIntegrationTest {
 
         // when & then
         mockMvc.perform(patch("/api/messages/{messageId}", unknownMessageId)
+                        .with(csrf())
+                        .with(asUser(UUID.randomUUID(), Role.USER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("MESSAGE_NOT_FOUND"))
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -175,15 +188,17 @@ class MessageApiIntegrationTest {
 
 
         // when & then
-        mockMvc.perform(delete("/api/messages/{messageId}", messageId))
+        mockMvc.perform(delete("/api/messages/{messageId}", messageId)
+                        .with(csrf())
+                        .with(asUser(userId, Role.USER)))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(patch("/api/messages/{messageId}", messageId)
+                        .with(csrf())
+                        .with(asUser(userId, Role.USER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(new MessageUpdateRequest("updated"))))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("MESSAGE_NOT_FOUND"))
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(status().isForbidden());
     }
 
     private UUID createUser(String username, String email, String password) throws Exception {
@@ -201,8 +216,9 @@ class MessageApiIntegrationTest {
         );
 
         String responseBody = mockMvc.perform(multipart("/api/users")
-                        .file(userCreateRequestPart))
-                .andExpect(status().isCreated())
+                        .file(userCreateRequestPart)
+                        .with(csrf()))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -218,6 +234,8 @@ class MessageApiIntegrationTest {
         );
 
         String responseBody = mockMvc.perform(post("/api/channels/public")
+                        .with(csrf())
+                        .with(asUser(UUID.randomUUID(), Role.CHANNEL_MANAGER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isCreated())
@@ -244,7 +262,9 @@ class MessageApiIntegrationTest {
         );
 
         String responseBody = mockMvc.perform(multipart("/api/messages")
-                        .file(messageCreateRequestPart))
+                        .file(messageCreateRequestPart)
+                        .with(csrf())
+                        .with(asUser(authorId, Role.USER)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -252,5 +272,13 @@ class MessageApiIntegrationTest {
 
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         return UUID.fromString(jsonNode.get("id").asText());
+    }
+
+    private RequestPostProcessor asUser(UUID userId, Role role) {
+        UserResponse response = new UserResponse(
+                userId, "authenticated-user", "authenticated@test.com",
+                null, true, role
+        );
+        return user(new DiscodeitUserDetails(response, "password"));
     }
 }

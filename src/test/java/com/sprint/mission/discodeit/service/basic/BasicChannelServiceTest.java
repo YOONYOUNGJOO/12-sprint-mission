@@ -17,6 +17,7 @@ import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.channel.ChannelType;
 import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.security.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,6 +69,9 @@ class BasicChannelServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private UserSessionService userSessionService;
 
     @InjectMocks
     private BasicChannelService channelService;
@@ -161,7 +166,8 @@ class BasicChannelServiceTest {
                 "user1",
                 "user1@test.com",
                 null,
-                null
+                false,
+                Role.USER
         );
 
         UserResponse userResponse2 = new UserResponse(
@@ -169,7 +175,8 @@ class BasicChannelServiceTest {
                 "user2",
                 "user2@test.com",
                 null,
-                null
+                false,
+                Role.USER
         );
 
         ChannelResponse expectedResponse = new ChannelResponse(
@@ -186,8 +193,10 @@ class BasicChannelServiceTest {
         given(userRepository.findById(userId2)).willReturn(Optional.of(user2));
         given(readStatusMapper.toEntity(any(User.class), any(Channel.class), any(Instant.class)))
                 .willReturn(readStatus1, readStatus2);
-        given(userMapper.toResponse(user1)).willReturn(userResponse1);
-        given(userMapper.toResponse(user2)).willReturn(userResponse2);
+        given(userSessionService.isOnline(userId1)).willReturn(false);
+        given(userSessionService.isOnline(userId2)).willReturn(false);
+        given(userMapper.toResponse(user1, false)).willReturn(userResponse1);
+        given(userMapper.toResponse(user2, false)).willReturn(userResponse2);
         given(channelMapper.toResponse(
                 savedChannel,
                 null,
@@ -207,8 +216,8 @@ class BasicChannelServiceTest {
         then(userRepository).should().findById(userId2);
         then(readStatusRepository).should().save(readStatus1);
         then(readStatusRepository).should().save(readStatus2);
-        then(userMapper).should().toResponse(user1);
-        then(userMapper).should().toResponse(user2);
+        then(userMapper).should().toResponse(user1, false);
+        then(userMapper).should().toResponse(user2, false);
         then(channelMapper).should().toResponse(savedChannel, null, List.of(userResponse1, userResponse2));
     }
 
@@ -374,8 +383,8 @@ class BasicChannelServiceTest {
         // then
         then(channelRepository).should().findById(channelId);
         then(messageRepository).should().findAllByChannel_Id(channelId);
-        then(messageService).should().delete(messageId1);
-        then(messageService).should().delete(messageId2);
+        then(messageService).should().deleteByChannelManager(messageId1);
+        then(messageService).should().deleteByChannelManager(messageId2);
         then(channelRepository).should().delete(channel);
     }
 
@@ -435,7 +444,8 @@ class BasicChannelServiceTest {
                 "user1",
                 "user1@test.com",
                 null,
-                null
+                false,
+                Role.USER
         );
 
         ChannelResponse publicResponse = new ChannelResponse(
@@ -472,7 +482,8 @@ class BasicChannelServiceTest {
         given(readStatusRepository.findAllByChannelIdWithUser(privateChannelId))
                 .willReturn(List.of(readStatus));
 
-        given(userMapper.toResponse(user)).willReturn(userResponse);
+        given(userSessionService.isOnline(userId)).willReturn(false);
+        given(userMapper.toResponse(user, false)).willReturn(userResponse);
         given(channelMapper.toResponse(publicChannel, null, List.of()))
                 .willReturn(publicResponse);
         given(channelMapper.toResponse(privateChannel, null, List.of(userResponse)))
@@ -495,7 +506,7 @@ class BasicChannelServiceTest {
         then(messageRepository).should().findFirstByChannel_IdOrderByCreatedAtDesc(publicChannelId);
         then(messageRepository).should().findFirstByChannel_IdOrderByCreatedAtDesc(privateChannelId);
         then(readStatusRepository).should().findAllByChannelIdWithUser(privateChannelId);
-        then(userMapper).should().toResponse(user);
+        then(userMapper).should().toResponse(user, false);
         then(channelMapper).should().toResponse(publicChannel, null, List.of());
         then(channelMapper).should().toResponse(privateChannel, null, List.of(userResponse));
     }

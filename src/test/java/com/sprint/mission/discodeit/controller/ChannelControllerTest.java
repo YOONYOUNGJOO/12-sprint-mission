@@ -17,6 +17,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.CreatePrivateChannelRequest;
 import com.sprint.mission.discodeit.dto.channel.CreatePublicChannelRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.user.Role;
 import com.sprint.mission.discodeit.entity.channel.ChannelType;
 import com.sprint.mission.discodeit.exception.GlobalExceptionHandler;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
@@ -36,6 +38,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ChannelController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, MDCLoggingInterceptor.class})
 class ChannelControllerTest {
 
@@ -125,7 +128,8 @@ class ChannelControllerTest {
                 "user1",
                 "user1@test.com",
                 null,
-                true
+                true,
+                Role.USER
         );
 
         UserResponse participant2 = new UserResponse(
@@ -133,7 +137,8 @@ class ChannelControllerTest {
                 "user2",
                 "user2@test.com",
                 null,
-                false
+                false,
+                Role.USER
         );
 
         ChannelResponse response = new ChannelResponse(
