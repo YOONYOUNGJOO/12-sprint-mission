@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sprint.mission.discodeit.entity.channel.Channel;
 import com.sprint.mission.discodeit.entity.message.Message;
 import com.sprint.mission.discodeit.entity.user.User;
+import com.sprint.mission.discodeit.entity.user.Role;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,7 @@ class MessageRepositoryTest {
                         .username("user1")
                         .email("user1@test.com")
                         .password("password")
+                        .role(Role.USER)
                         .build()
         );
 
@@ -104,6 +106,7 @@ class MessageRepositoryTest {
                         .username("user1")
                         .email("user1@test.com")
                         .password("password")
+                        .role(Role.USER)
                         .build()
         );
 
@@ -166,6 +169,7 @@ class MessageRepositoryTest {
                         .username("user1")
                         .email("user1@test.com")
                         .password("password")
+                        .role(Role.USER)
                         .build()
         );
 
@@ -222,6 +226,7 @@ class MessageRepositoryTest {
                         .username("user1")
                         .email("user1@test.com")
                         .password("password")
+                        .role(Role.USER)
                         .build()
         );
 

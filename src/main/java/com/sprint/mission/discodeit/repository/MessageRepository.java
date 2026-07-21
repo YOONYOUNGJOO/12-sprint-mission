@@ -17,10 +17,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     boolean existsByIdAndAuthor_Id(UUID messageId, UUID authorId);
 
-    @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
+    @EntityGraph(attributePaths = {"author", "author.profile"})
     List<Message> findAllByChannel_IdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
+    @EntityGraph(attributePaths = {"author", "author.profile"})
     List<Message> findAllByChannel_IdAndCreatedAtLessThanOrderByCreatedAtDesc(
             UUID channelId,
             Instant cursor,
