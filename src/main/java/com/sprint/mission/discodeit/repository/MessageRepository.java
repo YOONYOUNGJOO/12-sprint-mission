@@ -15,6 +15,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     Optional<Message> findFirstByChannel_IdOrderByCreatedAtDesc(UUID channelId);
 
+    boolean existsByIdAndAuthor_Id(UUID messageId, UUID authorId);
+
     @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
     List<Message> findAllByChannel_IdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
