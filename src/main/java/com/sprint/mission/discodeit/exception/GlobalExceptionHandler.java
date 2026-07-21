@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,18 +75,30 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(
+                        ErrorCode.ACCESS_DENIED,
+                        Map.of(),
+                        exception.getClass().getSimpleName(),
+                        HttpStatus.FORBIDDEN.value()
+                ));
+    }
+
     private HttpStatus getStatus(ErrorCode errorCode) {
 
         return switch (errorCode) {
             case USER_NOT_FOUND,
-                 USER_STATUS_NOT_FOUND,
                  CHANNEL_NOT_FOUND,
                  MESSAGE_NOT_FOUND,
                  READ_STATUS_NOT_FOUND,
                  BINARY_CONTENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
 
-            case USER_ALREADY_EXISTS,
-                 USER_STATUS_ALREADY_EXISTS -> HttpStatus.CONFLICT;
+            case USER_ALREADY_EXISTS -> HttpStatus.CONFLICT;
 
             case PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED,
                  INVALID_PASSWORD,
@@ -93,6 +106,11 @@ public class GlobalExceptionHandler {
 
             case BINARY_CONTENT_STORAGE_ERROR,
                  INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+
+            case AUTHENTICATION_FAILED,
+                 AUTHENTICATION_REQUIRED -> HttpStatus.UNAUTHORIZED;
+
+            case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
         };
     }
 }
