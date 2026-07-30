@@ -22,6 +22,7 @@ public enum ErrorCode {
 
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다."),
     AUTHENTICATION_FAILED("아이디 또는 비밀번호가 올바르지 않습니다."),
+    INVALID_REFRESH_TOKEN("유효하지 않은 리프레시 토큰입니다."),
 
     INVALID_REQUEST("잘못된 요청입니다."),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),

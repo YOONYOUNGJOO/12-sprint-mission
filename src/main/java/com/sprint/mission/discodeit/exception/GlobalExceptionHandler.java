@@ -108,7 +108,8 @@ public class GlobalExceptionHandler {
                  INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
 
             case AUTHENTICATION_FAILED,
-                 AUTHENTICATION_REQUIRED -> HttpStatus.UNAUTHORIZED;
+                 AUTHENTICATION_REQUIRED,
+                 INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
 
             case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
         };
