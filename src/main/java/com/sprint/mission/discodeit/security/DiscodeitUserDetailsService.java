@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class DiscodeitUserDetailsService implements UserDetailsService {
@@ -23,6 +25,16 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
+
+        UserResponse userResponse = userMapper.toResponse(user, true);
+
+        return new DiscodeitUserDetails(userResponse, user.getPassword());
+    }
+
+    @Transactional(readOnly = true)
+    public DiscodeitUserDetails loadUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다." + userId));
 
         UserResponse userResponse = userMapper.toResponse(user, true);
 
