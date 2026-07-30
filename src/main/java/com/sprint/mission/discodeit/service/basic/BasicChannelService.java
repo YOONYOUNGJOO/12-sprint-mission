@@ -20,18 +20,19 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.UserSessionService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class BasicChannelService implements ChannelService {
     private final MessageRepository messageRepository;
     private final MessageService messageService;
     private final UserMapper userMapper;
-    private final UserSessionService userSessionService;
+    private final JwtRegistry jwtRegistry;
 
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
     @Override
@@ -79,7 +80,7 @@ public class BasicChannelService implements ChannelService {
             ReadStatus readStatus = readStatusMapper.toEntity(user, saved, now);
             readStatusRepository.save(readStatus);
 
-            participants.add(userMapper.toResponse(user, userSessionService.isOnline(user.getId())));
+            participants.add(userMapper.toResponse(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId())));
         }
 
         log.info("Private channel created. channelId={}, participantCount={}", saved.getId(), participants.size());
@@ -172,7 +173,7 @@ public class BasicChannelService implements ChannelService {
 
         return readStatusRepository.findAllByChannelIdWithUser(channel.getId()).stream()
                 .map(ReadStatus::getUser)
-                .map(user -> userMapper.toResponse(user, userSessionService.isOnline(user.getId())))
+                .map(user -> userMapper.toResponse(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId())))
                 .toList();
     }
 

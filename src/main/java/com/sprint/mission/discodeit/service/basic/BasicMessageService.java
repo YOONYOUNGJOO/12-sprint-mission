@@ -18,7 +18,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.UserSessionService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
 import java.time.Instant;
@@ -43,7 +43,7 @@ public class BasicMessageService implements MessageService {
     private final UserRepository userRepository;
     private final BinaryContentService binaryContentService;
     private final UserMapper userMapper;
-    private final UserSessionService userSessionService;
+    private final JwtRegistry jwtRegistry;
 
     @Override
     @Transactional
@@ -223,7 +223,7 @@ public class BasicMessageService implements MessageService {
                 ? null
                 : userMapper.toResponse(
                 author,
-                userSessionService.isOnline(author.getId())
+                jwtRegistry.hasActiveJwtInformationByUserId(author.getId())
         );
 
         return messageMapper.toResponse(message, authorResponse);

@@ -11,7 +11,7 @@ import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.UserSessionService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.UserService;
 
@@ -34,7 +34,7 @@ public class BasicUserService implements UserService {
     private final UserMapper userMapper;
     private final BinaryContentService binaryContentService;
     private final PasswordEncoder passwordEncoder;
-    private final UserSessionService userSessionService;
+    private final JwtRegistry jwtRegistry;
 
     @Override
     @Transactional
@@ -73,17 +73,16 @@ public class BasicUserService implements UserService {
     public UserResponse findById(UUID userId) {
         User user = getUserOrThrow(userId);
 
-        return userMapper.toResponse(user, userSessionService.isOnline(user.getId()));
+        return userMapper.toResponse(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
         return userRepository.findAll().stream()
-                .map(user -> userMapper.toResponse(
-                        user,
-                        userSessionService.isOnline(user.getId())
-                ))
+                .map(user -> userMapper.toResponse(user,
+                        jwtRegistry.hasActiveJwtInformationByUserId(user.getId()))
+                )
                 .toList();
     }
 
@@ -140,7 +139,7 @@ public class BasicUserService implements UserService {
 
         log.info("User updated. userId={}", user.getId());
 
-        return userMapper.toResponse(user, userSessionService.isOnline(user.getId()));
+        return userMapper.toResponse(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId()));
     }
 
     @PreAuthorize("#userId == authentication.principal.userResponse.id")
