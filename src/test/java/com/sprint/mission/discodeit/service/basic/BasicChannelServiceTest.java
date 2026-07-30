@@ -28,6 +28,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,7 +36,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.security.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,7 +71,7 @@ class BasicChannelServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private UserSessionService userSessionService;
+    private JwtRegistry jwtRegistry;
 
     @InjectMocks
     private BasicChannelService channelService;
@@ -193,8 +193,8 @@ class BasicChannelServiceTest {
         given(userRepository.findById(userId2)).willReturn(Optional.of(user2));
         given(readStatusMapper.toEntity(any(User.class), any(Channel.class), any(Instant.class)))
                 .willReturn(readStatus1, readStatus2);
-        given(userSessionService.isOnline(userId1)).willReturn(false);
-        given(userSessionService.isOnline(userId2)).willReturn(false);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(userId1)).willReturn(false);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(userId2)).willReturn(false);
         given(userMapper.toResponse(user1, false)).willReturn(userResponse1);
         given(userMapper.toResponse(user2, false)).willReturn(userResponse2);
         given(channelMapper.toResponse(
@@ -482,7 +482,7 @@ class BasicChannelServiceTest {
         given(readStatusRepository.findAllByChannelIdWithUser(privateChannelId))
                 .willReturn(List.of(readStatus));
 
-        given(userSessionService.isOnline(userId)).willReturn(false);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(userId)).willReturn(false);
         given(userMapper.toResponse(user, false)).willReturn(userResponse);
         given(channelMapper.toResponse(publicChannel, null, List.of()))
                 .willReturn(publicResponse);

@@ -14,7 +14,7 @@ import com.sprint.mission.discodeit.entity.user.User;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.UserSessionService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +33,7 @@ class BasicUserServiceTest {
     @Mock UserMapper userMapper;
     @Mock BinaryContentService binaryContentService;
     @Mock PasswordEncoder passwordEncoder;
-    @Mock UserSessionService userSessionService;
+    @Mock JwtRegistry jwtRegistry;
     @InjectMocks BasicUserService userService;
 
     @Test
@@ -87,7 +87,7 @@ class BasicUserServiceTest {
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(passwordEncoder.encode("new-password")).willReturn("new-encoded");
-        given(userSessionService.isOnline(userId)).willReturn(true);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(userId)).willReturn(true);
         given(userMapper.toResponse(user, true)).willReturn(expected);
 
         UserResponse result = userService.update(userId, request, Optional.empty());

@@ -27,6 +27,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,7 +36,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.sprint.mission.discodeit.service.BinaryContentService;
-import com.sprint.mission.discodeit.security.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,7 +66,7 @@ class BasicMessageServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private UserSessionService userSessionService;
+    private JwtRegistry jwtRegistry;
 
     @InjectMocks
     private BasicMessageService messageService;
@@ -131,7 +131,7 @@ class BasicMessageServiceTest {
         given(userRepository.findById(authorId)).willReturn(Optional.of(author));
         given(messageMapper.toEntity(request, channel, author, List.of())).willReturn(message);
         given(messageRepository.save(message)).willReturn(savedMessage);
-        given(userSessionService.isOnline(authorId)).willReturn(false);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(authorId)).willReturn(false);
         given(userMapper.toResponse(author, false)).willReturn(authorResponse);
         given(messageMapper.toResponse(savedMessage, authorResponse)).willReturn(expectedResponse);
 
@@ -225,7 +225,7 @@ class BasicMessageServiceTest {
         given(binaryContentService.createBinaryContent(attachmentRequest)).willReturn(attachment);
         given(messageMapper.toEntity(request, channel, author, List.of(attachment))).willReturn(message);
         given(messageRepository.save(message)).willReturn(savedMessage);
-        given(userSessionService.isOnline(authorId)).willReturn(false);
+        given(jwtRegistry.hasActiveJwtInformationByUserId(authorId)).willReturn(false);
         given(userMapper.toResponse(author, false)).willReturn(authorResponse);
         given(messageMapper.toResponse(savedMessage, authorResponse)).willReturn(expectedResponse);
 

@@ -12,7 +12,9 @@ import com.sprint.mission.discodeit.entity.user.User;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.UserSessionService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +29,8 @@ class BasicAuthServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock UserMapper userMapper;
-    @Mock UserSessionService userSessionService;
+    @Mock JwtTokenProvider jwtTokenProvider;
+    @Mock JwtRegistry jwtRegistry;
     @InjectMocks BasicAuthService authService;
 
     @Test
@@ -41,14 +44,13 @@ class BasicAuthServiceTest {
                 Role.CHANNEL_MANAGER);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(userSessionService.isOnline(userId)).willReturn(false);
         given(userMapper.toResponse(user, false)).willReturn(expected);
 
         UserResponse result = authService.updateRole(request);
 
         assertThat(result).isEqualTo(expected);
         assertThat(user.getRole()).isEqualTo(Role.CHANNEL_MANAGER);
-        then(userSessionService).should().expireSessions(userId);
+        then(jwtRegistry).should().invalidateJwtInformationByUserId(userId);
     }
 
     @Test
